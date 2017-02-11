@@ -1,0 +1,48 @@
+body {
+  font: 10px sans-serif;
+}
+
+.chart-box {
+  border: 3px solid gray;
+}
+
+
+.tick line {
+  stroke: none;
+  shape-rendering: crispEdges;
+  stroke-dasharray: 5, 5;
+}
+
+.hover-line {
+  stroke: white;
+  fill: none;
+  stroke-width: 1px;
+}
+.domain {
+  stroke-width: 3px;
+  stroke: #FFCC66;
+}
+
+.connection:hover {
+  stroke-width: 3px;
+}
+
+#firstchart {
+  height: 500px;
+  padding: 10px;
+}
+
+.bar {
+  fill: red;
+}
+
+.bar:hover {
+  fill: red;
+  width: 3px;
+}
+
+.brush .extent {
+  stroke: gray;
+  fill: blue;
+  fill-opacity: .165;
+}
