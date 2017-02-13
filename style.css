@@ -27,11 +27,6 @@ body {
   stroke-width: 3px;
 }
 
-#firstchart {
-  height: 500px;
-  padding: 10px;
-}
-
 .bar {
   fill: red;
 }
