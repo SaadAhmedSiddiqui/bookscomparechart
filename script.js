@@ -1,6 +1,12 @@
 (function (){
   'use strict';
 
+  // book1: Top Bar Chart (x0)
+  // book2: Bottom Bar Chart (x1)
+  // connections: connect top bars with bottom bars
+  // y-axis: 0 to 100 for book1 and book2
+  // x-axis: decided by maxValues function which returns {book1, book2, peek}
+
   var margin = {
         top: 60,
         right: 20,
@@ -12,234 +18,198 @@
         right: 0,
         bottom: 60,
         left: 60
-      },
-      outerWidth = 1200,
-      outerHeight = 600,
-      innerWidth = outerWidth - margin.left - margin.right,
-      innerHeight = outerHeight - margin.top - margin.bottom,
-      width = innerWidth - padding.left - padding.right,
-      height = innerHeight - padding.top - padding.bottom;
-var k = height / width,
-    x3 = [-4.5, 4.5],
-    y3 = [-4.5 * k, 4.5 * k]
-    
-// largest value between the two books (Max value).
-//put condition to retunr the largest max value 
-//which will be used as the max value for domain x axis
+      };
+  var max, width, height,
+      outerWidth, outerHeight, innerWidth, innerHeight;
 
-var maxBook1Value,maxBook2Value;
-var maxBookValue = 4020;
-
-var chartGroup = d3.select("#chartBox").append("svg")
-  .attr("width", outerWidth)
-  .attr("height", outerHeight)
-  .attr("class", "chartGroup")
- // .call(zoom)
-  .append("g")
-
-var firstChart = chartGroup.append("g");
-firstChart.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-  .attr("id", "firstchart")
-
-var connections = d3.select("#firstchart").append("g")
-  .attr("class", "connections");
-
-margin.top += 300;
-
-var secondChart = chartGroup.append("g");
-secondChart.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-  .attr("id", "secondchart");
-
-//var x0 = d3.scaleBand().range([0, width]).padding(0.0);
-//var x1 = d3.scaleBand().range([0, width]).padding(0.0);
-
-var y0 = d3.scaleLinear().range([150, 0]);
-var y0Axis = d3.axisLeft(y0).ticks(5);
-var y1 = d3.scaleLinear().range([0, 150]);
-var y1Axis = d3.axisLeft(y1).ticks(5);
-var   x0Axis, x1Axis;
-
-
+  var chartData = null;
+  var chartBox, svgD3, chartGroup, x0ScaleNode, x1ScaleNode;
+  var book1Bars, connections, book2Bars;
   var brush = d3.brushX().on("end", brushended),
-    idleTimeout,
-    idleDelay = 350;
+      idleTimeout,
+      idleDelay = 350;
 
-d3.tsv("data-ss.txt", type, function(error, data) {
+  var xScale, x0Axis, x1Axis;
+  var y0Scale, y0Axis, y1Scale, y1Axis;
 
+  /* var k = height / width,
+   x3 = [-4.5, 4.5],
+   y3 = [-4.5 * k, 4.5 * k];*/
 
-//var brush = d3.brushX()
-  //  .extent([
-    //  [0, 0],
-      //[width - 20, outerHeight]
-    //])
-  //  .on("start brush end", brushmoved);
-    
-  
+  createChart();
+  eventBindings();
+  setLayout();
 
-  //minimum/maximum values for column9 used for ticks
-  var max = d3.max(data, function(d) {
-    return d.column9;
-  });
-  var min = d3.min(data, function(d) {
-    return d.column9;
+  d3.tsv("data-ss.txt", mapData, function(error, data) {
+    chartData = data;
+    drawChart();
   });
 
+  function eventBindings(){
+    d3.select("button").on("click", resetted);
+    window.onresize = onResize;
+  }
+  function onResize() {
+    setLayout();
+    drawChart();
+  }
+  function resetted() {
+    chartGroup.transition()
+        .duration(750)
+        .call(zoom.transform, d3.zoomIdentity);
+  }
 
- // x0 = d3.scaleLinear()
-   // .domain([0, d3.max(data, function(d) {
-     // return d.column9;
-//    })])
-  //  .range([0, width]);
-    
-      var x0 = d3.scaleLinear()
-    .domain([0, maxBookValue])
-    .range([0, width]);
-    
+  function createChart(){
+    chartBox    = document.getElementById('chartBox');
+    svgD3       = d3.select(chartBox).append("svg").attr("class", "chartGroup");
+    chartGroup  = svgD3.append("g");
 
-  //minimum/maximum values for column10 used for ticks
-  var min1 = d3.min(data, function(d) {
-    return d.column10;
-  });
-  var max1 = d3.max(data, function(d) {
-    return d.column10;
-  });
+    book1Bars   = chartGroup.append("g").attr("id", "firstchart");
+    connections = chartGroup.append("g").attr("class", "connections");
+    book2Bars   = chartGroup.append("g").attr("id", "secondchart");
+    chartGroup.append("g").attr("class", "brush").call(brush);
 
-//  x1 = d3.scaleLinear()
-  //  .domain([0, d3.max(data, function(d) {
-    //  return d.column10;
-    //})])
-    //.range([0, width]);
-    
-      var x1 = d3.scaleLinear()
-    .domain([0, maxBookValue])
-    .range([0, width]);
+    outerHeight = 600;
 
-  y0.domain([d3.min(data, function(d) {
-    return d.column11;
-  }), d3.max(data, function(d) {
-    return d.column12;
-  })]);
-
-  y1.domain([d3.min(data, function(d) {
-    return d.column13;
-  }), d3.max(data, function(d) {
-    return d.column14;
-  })]);
-
-  firstChart.selectAll(".bar")
-    .data(data)
-    .enter().append("rect")
-    .attr("class", "bar")
-    .attr("x", function(d) {
-      return x0(d.column9);
-    })
-    .attr("width", 0.5)
-    .attr("y", function(d) {
-      return y0(d.column11), y0(d.column12);
-    })
-    .attr("height", function(d) {
-      return y0(d.column11) - y0(d.column12);
-    })
-
-  x0Axis = d3.axisBottom(x0).tickValues([1, 4020]);
+    xScale  = d3.scaleLinear();
+    y0Scale = d3.scaleLinear().domain([0, 100]).range([150, 0]);
+    y1Scale = d3.scaleLinear().domain([0, 100]).range([0, 150]);
+    y0Axis  = d3.axisLeft(y0Scale).ticks(5);
+    y1Axis  = d3.axisLeft(y1Scale).ticks(5);
 
 
+    // - Book1 xAxis Scale::
+    x0ScaleNode = book1Bars.append("g")
+        .attr("class", "x0 axis")
+        .attr("transform", "translate(0," + 150 + ")");
 
-  //First Chart Starts
-  firstChart.append("g")
-    .attr("class", "x0 axis")
-    .attr("transform", "translate(0," + 150 + ")")
-    .call(x0Axis)
-    .selectAll("text")
-    .attr("y", 0)
-    .attr("x", 15)
-    .attr("dy", ".10em")
-    .attr("transform", "rotate(90)")
-    .style("text-anchor", "start");
+    // - Book2 xAxis Scale::
+    x1ScaleNode = book2Bars.append("g")
+        .attr("class", "x1 axis")
+        .attr("transform", "translate(0," + 0 + ")");
 
-  firstChart.append("g")
-    .attr("class", "y0 axis")
-    .call(y0Axis)
-    .selectAll("text")
-    .append("text")
-    .attr("transform", "rotate(-90)")
-    .attr("y", 2)
-    .attr("dy", ".31em")
-    .style("text-anchor", "end")
-    .text("Column9");
+    // - Book1 yAxis Scale::
+    book1Bars.append("g")
+        .attr("class", "y0 axis")
+        .call(y0Axis)
+        .selectAll("text")
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 2)
+        .attr("dy", ".31em")
+        .style("text-anchor", "end")
+        .text("Column9");
 
-  ////////First Chart Ends//////
+    // - Book2 xAxis Scale::
+    book2Bars.append("g")
+        .attr("class", "y1 axis")
+        .call(y1Axis)
+        .selectAll("text")
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 2)
+        .attr("dy", ".31em")
+        .style("text-anchor", "end")
+        .text("Column10");
+  }
+  function setLayout(){
+    outerWidth = chartBox.offsetWidth;
+    innerWidth = outerWidth - margin.left - margin.right;
+    innerHeight = outerHeight - margin.top - margin.bottom;
+    width = innerWidth - padding.left - padding.right;
+    height = innerHeight - padding.top - padding.bottom;
 
-  //////Second Chart Start///////
-  secondChart.selectAll(".bar")
-    .data(data)
-    .enter().append("rect")
-    .attr("class", "bar")
-    .attr("x", function(d) {
-      return x1(d.column10);
-    })
-    .attr("width", 0.5)
-    .attr("y", function(d) {
-      return y1(d.column14), y1(d.column13);
-    })
-    .attr("height", function(d) {
-      return y1(d.column14) - y1(d.column13);
-    })
+    svgD3.attr("width", outerWidth)
+        .attr("height", outerHeight);
 
-  x1Axis = d3.axisBottom(x1).tickValues([1, 1172]);
+    book1Bars.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    connections.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    book2Bars.attr("transform", "translate(" + margin.left + "," + (margin.top+300) + ")");
+  }
+  function drawChart(){
 
+    // --- Set Scales on Basis of the chartData ::
+    max = maxValues();
+    xScale.domain([0, max.peek]).range([0, width]);
+    x0Axis = d3.axisBottom(xScale).tickValues([1, max.book1]);
+    x1Axis = d3.axisBottom(xScale).tickValues([1, max.book2]);
 
-  secondChart.append("g")
-    .attr("class", "x1 axis")
-    .attr("transform", "translate(0," + 0 + ")")
-    .call(x1Axis)
-    .selectAll("text")
-    .attr("y", 0)
-    .attr("dy", ".30em")
-    .attr("transform", "rotate(-90)")
-    .style("text-anchor", "start");
+    // --- Draw Book1 Bar Chart [START] :::
+    var book1BarNodes = book1Bars.selectAll(".bar")
+        .data(chartData);
 
-  secondChart.append("g")
-    .attr("class", "y1 axis")
-    .call(y1Axis)
-    .selectAll("text")
-    .append("text")
-    .attr("transform", "rotate(-90)")
-    .attr("y", 2)
-    .attr("dy", ".31em")
-    .style("text-anchor", "end")
-    .text("Column10");
+    book1BarNodes.enter().append("rect")
+        .attr("class", "bar")
+        .attr("width", 0.5);
 
-  ////////Second Chart Ends//////
+    book1BarNodes = book1Bars.selectAll(".bar");
+    book1BarNodes
+        .attr("x", function(d) {
+          return xScale(d.book1_page);
+        })
+        .attr("y", function(d) {
+          return y0Scale(d.book1_y2);
+        })
+        .attr("height", function(d) {
+          return y0Scale(d.book1_y1) - y0Scale(d.book1_y2);
+        });
 
-  var connection = chartGroup.append("g");
-  connections.selectAll("path")
-    .data(data)
-    .enter()
-    .append("path")
-    .style("stroke", "#FFCC66")
-    .attr("class", "connection")
-    .style("fill", "none")
+    x0ScaleNode.call(x0Axis)
+        .selectAll("text")
+        .attr("y", 0)
+        .attr("x", 15)
+        .attr("dy", ".10em")
+        .attr("transform", "rotate(90)")
+        .style("text-anchor", "start");
+    // --- Draw Book1 Bar Chart [END] :::
 
+    // --- Draw Connections Curves [START] :::
+    var connectionNodes = connections.selectAll("path")
+        .data(chartData);
 
-  .on("click", function(d, i) {
-      alert(d.column9 + "- " + d.column10);
-      console.log(d);
-    })
-    .attr("d", function(d) {
-      return "M " + x0(d.column9) + " 150 C " + x0(d.column9) + " 250," + x1(d.column10) + " 220 , " + x1(d.column10) + " " + 300;
-    });
+    connectionNodes.enter().append("path")
+        .style("stroke", "#FFCC66")
+        .attr("class", "connection")
+        .style("fill", "none");
 
-  chartGroup.append("g")
-    .attr("class", "brush")
-    .call(brush);
+    connectionNodes = connections.selectAll("path");
+    connectionNodes.on("click", function(d, i) {
+          console.log(d);
+        })
+        .attr("d", function(d) {
+          return "M " + xScale(d.book1_page) + " 150 C " + xScale(d.book1_page) + " 250," + xScale(d.book2_page) + " 220 , " + xScale(d.book2_page) + " " + 300;
+        });
 
-  d3.select("button")
-    .on("click", resetted);
-    
+    // --- Draw Connections Curves [END] :::
 
+    // --- Draw Book1 Bar Chart [START] :::
+    var book2BarNodes = book2Bars.selectAll(".bar")
+        .data(chartData);
 
-});
+    book2BarNodes.enter().append("rect")
+        .attr("class", "bar")
+        .attr("width", 0.5);
+
+    book2BarNodes = book2Bars.selectAll(".bar");
+    book2BarNodes.attr("x", function(d) {
+          return xScale(d.book2_page);
+        })
+        .attr("y", function(d) {
+          return y1Scale(d.book2_y1);
+        })
+        .attr("height", function(d) {
+          return y1Scale(d.book2_y2) - y1Scale(d.book2_y1);
+        });
+
+    x1ScaleNode.call(x1Axis)
+        .selectAll("text")
+        .attr("y", 0)
+        .attr("dy", ".30em")
+        .attr("transform", "rotate(-90)")
+        .style("text-anchor", "start");
+
+    // --- Draw Book1 Bar Chart [END] :::
+  }
 
 //function brushmoved() {
 
@@ -249,70 +219,81 @@ d3.tsv("data-ss.txt", type, function(error, data) {
 //}
 
 
-function type(d) {
-  d.column9 = +d.column9;
-  d.column10 = +d.column10;
-  d.column11 = +d.column11;
-  d.column12 = +d.column12;
-  d.column13 = +d.column13;
-  d.column14 = +d.column14;
+  function mapData(d) {
+    d.column9 = +d.column9;
+    d.column10 = +d.column10;
+    d.column11 = +d.column11;
+    d.column12 = +d.column12;
+    d.column13 = +d.column13;
+    d.column14 = +d.column14;
 
-  //d.column15 = +d.column15;
-  // d.column16 = +d.column16;
-  return d;
-}
+    //d.column15 = +d.column15;
+    // d.column16 = +d.column16;
 
-function zoomed() {
-  chartGroup.attr("transform", d3.event.transform);
-}
-
-
-
-function resetted() {
-  chartGroup.transition()
-    .duration(750)
-    .call(zoom.transform, d3.zoomIdentity);
-}
-
-function dragged(d) {
-  var x = d3.event.x;
-  var y = d3.event.y;
-  d3.select(this).attr("transform", "translate(" + x + "," + y + ")");
-}
-
-
-function brushended() {
-  var s = d3.event.selection;
-  if (!s) {
-    if (!idleTimeout) return idleTimeout = setTimeout(idled, idleDelay);
-    x0.domain(x3);
-    y0.domain(y3);
-   // x1.domain(x3);
-    //y1.domain(y3);
-  } else {
-    x0.domain([s[1][1], s[1][0]].map(x0.invert, x1));
-    y0.domain([s[1][1], s[0][1]].map(y0.invert, y1));
-    // x1.domain([s[0][0], s[1][0]].map(x1.invert, x1));
-    //y1.domain([s[1][1], s[0][1]].map(y1.invert, y1));
-    chartGroup.select(".brush").call(brush.move, null);
+    return {
+      book1_page  : +d.column9,
+      book2_page  : +d.column10,
+      book1_y1    : +d.column11,
+      book1_y2    : +d.column12,
+      book2_y1    : +d.column13,
+      book2_y2    : +d.column14
+    };
   }
-  zoom();
-}
 
-function idled() {
-  idleTimeout = null;
-}
+  function zoomed() {
+    chartGroup.attr("transform", d3.event.transform);
+  }
 
-function zoom() {
-  var t = chartGroup.transition().duration(750);
-  chartGroup.select(".x0").transition(t).call(x0Axis);
-  chartGroup.select(".y0").transition(t).call(y0Axis);
-  //chartGroup.select(".x1").transition(t).call(x1Axis);
-  //chartGroup.select(".y1").transition(t).call(y1Axis);
-  //chartGroup.selectAll("rect").transition(t)
+
+
+
+  function dragged(d) {
+    var x = d3.event.x;
+    var y = d3.event.y;
+    d3.select(this).attr("transform", "translate(" + x + "," + y + ")");
+  }
+
+
+  function brushended() {
+    var s = d3.event.selection;
+    if (!s) {
+      if (!idleTimeout) return idleTimeout = setTimeout(idled, idleDelay);
+      xScale.domain(x3);
+      y0Scale.domain(y3);
+      // x1.domain(x3);
+      //y1.domain(y3);
+    } else {
+      xScale.domain([s[1][1], s[1][0]].map(xScale.invert, xScale));
+      y0Scale.domain([s[1][1], s[0][1]].map(y0Scale.invert, y1Scale));
+      // x1.domain([s[0][0], s[1][0]].map(x1.invert, x1));
+      //y1.domain([s[1][1], s[0][1]].map(y1.invert, y1));
+      chartGroup.select(".brush").call(brush.move, null);
+    }
+    //zoom();
+  }
+
+  function idled() {
+    idleTimeout = null;
+  }
+
+  function zoom() {
+    var t = chartGroup.transition().duration(750);
+    chartGroup.select(".x0").transition(t).call(x0Axis);
+    chartGroup.select(".y0").transition(t).call(y0Axis);
+    //chartGroup.select(".x1").transition(t).call(x1Axis);
+    //chartGroup.select(".y1").transition(t).call(y1Axis);
+    //chartGroup.selectAll("rect").transition(t)
     //  .attr("x", function(d) { return x0(d[0]); })
-      //.attr("y", function(d) { return y1(d[1]); });
-  
-}
+    //.attr("y", function(d) { return y1(d[1]); });
+
+  }
+
+  function maxValues(){
+    return {
+      book1: 4020,
+      book2: 1172,
+      peek: 4020
+    };
+  }
 
 })();
