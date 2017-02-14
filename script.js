@@ -20,11 +20,11 @@
         bottom: 60,
         left: 60
       };
-  var max, width,
+  var max, width, height,
       outerWidth, outerHeight = 570, innerWidth, innerHeight;
 
   var chartData = null;
-  var chartBox, svgD3, drawingG, marksG, x0ScaleNode, x1ScaleNode;
+  var chartBox, svgD3, drawingG, marksG, clipRect, x0ScaleNode, x1ScaleNode;
   var book1Bars, connections, book2Bars, brushG;
 
   var xScale, x0Axis, x1Axis;
@@ -56,7 +56,7 @@
   function createChart(){
     chartBox    = document.getElementById('chartBox');
     svgD3       = d3.select(chartBox).append("svg").attr("class", "chartGroup");
-    drawingG    = svgD3.append("g").attr("class", "drawing");
+    drawingG    = svgD3.append("g").attr("class", "drawing").attr("clip-path","url('#clipDrawing')");
     marksG      = svgD3.append("g").attr("class", "markings");
 
     book1Bars   = drawingG.append("g").attr("id", "firstchart");
@@ -64,12 +64,11 @@
     book2Bars   = drawingG.append("g").attr("id", "secondchart");
     brushG      = svgD3.append("g").attr("class", "brush");
 
-    xScale  = d3.scaleLinear();
-    y0Scale = d3.scaleLinear().domain([0, 100]).range([150, 0]);
-    y1Scale = d3.scaleLinear().domain([0, 100]).range([0, 150]);
-    y0Axis  = d3.axisLeft(y0Scale).ticks(5);
-    y1Axis  = d3.axisLeft(y1Scale).ticks(5);
-
+    xScale      = d3.scaleLinear();
+    y0Scale     = d3.scaleLinear().domain([0, 100]).range([150, 0]);
+    y1Scale     = d3.scaleLinear().domain([0, 100]).range([0, 150]);
+    y0Axis      = d3.axisLeft(y0Scale).ticks(5);
+    y1Axis      = d3.axisLeft(y1Scale).ticks(5);
 
     // - Book1 xAxis Scale::
     x0ScaleNode = marksG.append("g")
@@ -82,41 +81,28 @@
         .attr("transform", "translate("+margin.left+"," + (margin.top+300) + ")");
 
     // - Book1 yAxis Scale::
-    book1Bars.append("g")
+    marksG.append("g")
         .attr("class", "y0 axis")
         .call(y0Axis)
-        .selectAll("text")
-        .append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("y", 2)
-        .attr("dy", ".31em")
-        .style("text-anchor", "end")
-        .text("Column9");
+        .attr("transform", "translate("+margin.left+"," + margin.top + ")");
 
     // - Book2 xAxis Scale::
-    book2Bars.append("g")
+    marksG.append("g")
         .attr("class", "y1 axis")
         .call(y1Axis)
-        .selectAll("text")
-        .append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("y", 2)
-        .attr("dy", ".31em")
-        .style("text-anchor", "end")
-        .text("Column10");
+        .attr("transform", "translate("+margin.left+"," + (margin.top+300) + ")");
 
     // - Clip Path (Masking) ::
-    /*svgD3.append("defs").append("clipPath")
-        .attr("id", "clip")
-        .append("rect")
-        .attr("width", width)
-        .attr("height", height);*/
+    clipRect = svgD3.append("defs").append("clipPath")
+        .attr("id", "clipDrawing")
+        .append("rect");
   }
   function setLayout(){
     outerWidth = chartBox.offsetWidth;
     innerWidth = outerWidth - margin.left - margin.right;
     innerHeight = outerHeight - margin.top - margin.bottom;
     width = innerWidth - padding.left - padding.right;
+    height = innerHeight-40;
 
     svgD3.attr("width", outerWidth)
         .attr("height", outerHeight);
@@ -124,6 +110,9 @@
     drawingG.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
     brushG.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
     book2Bars.attr("transform", "translate(0,300)");
+
+    clipRect.attr("width", width)
+        .attr("height", height);
   }
   function drawChart() {
 
@@ -133,7 +122,7 @@
     xScale.domain(xIdentityDomain).range([0, width]);
     x0Axis = d3.axisBottom(xScale).tickValues([1, max.book1]);
     x1Axis = d3.axisTop(xScale).tickValues([1, max.book2]);
-    brushHandle.extent([[0, 0], [width, innerHeight-40]]);
+    brushHandle.extent([[0, 0], [width, height]]);
 
     // --- Draw Book1 Bar Chart [START] :::
     var book1BarNodes = book1Bars.selectAll(".bar")
@@ -210,8 +199,7 @@
     x0ScaleNode.transition(t).call(x0Axis)
         .selectAll("text")
         .attr("x", 10)
-        .attr("y", 0)
-        .attr("dy", 2)
+        .attr("y", -5)
         .attr("transform", "rotate(90)")
         .style("text-anchor", "start");
 
@@ -219,8 +207,7 @@
     x1ScaleNode.transition(t).call(x1Axis)
         .selectAll("text")
         .attr("x", -10)
-        .attr("y", 0)
-        .attr("dy", -2)
+        .attr("y", 2)
         .attr("transform", "rotate(90)")
         .style("text-anchor", "end");
 
