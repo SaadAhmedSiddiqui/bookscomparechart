@@ -19,7 +19,8 @@
         right: 0,
         bottom: 60,
         left: 60
-      };
+      },
+      barMaxHeight = 150;
   var max, width, height,
       outerWidth, outerHeight = 570, innerWidth, innerHeight;
 
@@ -31,7 +32,7 @@
   var y0Scale, y0Axis, y1Scale, y1Axis;
   var brushHandle = d3.brushX().on("end", brushEnded);
 
-  var xIdentityDomain, idleTimeout, idleDelay = 350, duration1 = 750, duration2 = 500, duration3 = 250;
+  var xIdentityDomain, currentXDomain, idleTimeout, idleDelay = 350, duration1 = 750, duration2 = 500;
 
   createChart();
   eventBindings();
@@ -50,35 +51,36 @@
   function onResize() {
     setLayout();
     drawChart();
+    xScale.domain(currentXDomain);
     updateChart(duration2);
   }
 
   function createChart(){
     chartBox    = document.getElementById('chartBox');
     svgD3       = d3.select(chartBox).append("svg").attr("class", "chartGroup");
+    brushG      = svgD3.append("g").attr("class", "brush");
     drawingG    = svgD3.append("g").attr("class", "drawing").attr("clip-path","url('#clipDrawing')");
     marksG      = svgD3.append("g").attr("class", "markings");
 
     book1Bars   = drawingG.append("g").attr("id", "firstchart");
     connections = drawingG.append("g").attr("class", "connections");
     book2Bars   = drawingG.append("g").attr("id", "secondchart");
-    brushG      = svgD3.append("g").attr("class", "brush");
 
     xScale      = d3.scaleLinear();
-    y0Scale     = d3.scaleLinear().domain([0, 100]).range([150, 0]);
-    y1Scale     = d3.scaleLinear().domain([0, 100]).range([0, 150]);
+    y0Scale     = d3.scaleLinear().domain([0, 100]).range([barMaxHeight, 0]);
+    y1Scale     = d3.scaleLinear().domain([0, 100]).range([0, barMaxHeight]);
     y0Axis      = d3.axisLeft(y0Scale).ticks(5);
     y1Axis      = d3.axisLeft(y1Scale).ticks(5);
 
     // - Book1 xAxis Scale::
     x0ScaleNode = marksG.append("g")
         .attr("class", "x0 axis")
-        .attr("transform", "translate("+margin.left+"," + (margin.top+150) + ")");
+        .attr("transform", "translate("+margin.left+"," + (margin.top+barMaxHeight) + ")");
 
     // - Book2 xAxis Scale::
     x1ScaleNode = marksG.append("g")
         .attr("class", "x1 axis")
-        .attr("transform", "translate("+margin.left+"," + (margin.top+300) + ")");
+        .attr("transform", "translate("+margin.left+"," + (margin.top+barMaxHeight*2) + ")");
 
     // - Book1 yAxis Scale::
     marksG.append("g")
@@ -90,7 +92,7 @@
     marksG.append("g")
         .attr("class", "y1 axis")
         .call(y1Axis)
-        .attr("transform", "translate("+margin.left+"," + (margin.top+300) + ")");
+        .attr("transform", "translate("+margin.left+"," + (margin.top+barMaxHeight*2) + ")");
 
     // - Clip Path (Masking) ::
     clipRect = svgD3.append("defs").append("clipPath")
@@ -138,9 +140,7 @@
         .data(chartData);
 
     connectionNodes.enter().append("path")
-        .style("stroke", "#FFCC66")
         .attr("class", "connection")
-        .style("fill", "none")
         .on("click", function (d, i) {
           console.log(d);
         });
@@ -159,7 +159,9 @@
     book2BarNodes.exit().remove();
     // --- Draw Book2 Bar Chart [END] :::
 
-    brushG.call(brushHandle);
+    brushG.call(brushHandle)
+        .select('.overlay')
+        .on("dblclick", restoreCanvas);
 
   }
   function updateChart(duration){
@@ -214,16 +216,17 @@
   }
 
   function brushEnded() {
+    console.log('test2');
     if (!d3.event.sourceEvent) return; // Only transition after input.
     var sel = d3.event.selection;
     if (!sel) {
-      if (!idleTimeout) return idleTimeout = setTimeout(idled, idleDelay);
-      xScale.domain(xIdentityDomain);
+      return;
     }
     else {
-      xScale.domain(sel.map(function (d) {
+      currentXDomain =sel.map(function (d) {
         return Math.round(xScale.invert(d));
-      }));
+      });
+      xScale.domain(currentXDomain);
       brushG.call(brushHandle.move, null);
     }
     zoom();
@@ -232,11 +235,14 @@
     idleTimeout = null;
   }
   function restoreCanvas(){
+    if (idleTimeout) {
+      return;
+    }
+    idleTimeout = setTimeout(idled, idleDelay);
     xScale.domain(xIdentityDomain);
     zoom();
   }
   function zoom() {
-    var t = svgD3.transition().duration(duration1);
     updateChart(duration1);
   }
 
