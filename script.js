@@ -29,7 +29,7 @@
 
   var xScale, x0Axis, x1Axis;
   var y0Scale, y0Axis, y1Scale, y1Axis;
-  var brushHandle = d3.brushX();
+  var brushHandle = d3.brushX().on("end", brushEnded);
 
   var xIdentityDomain, idleTimeout, idleDelay = 350, duration1 = 750, duration2 = 500, duration3 = 250;
 
@@ -44,7 +44,7 @@
   });
 
   function eventBindings(){
-    brushHandle.on("end", brushEnded);
+    d3.select('#resetBtn').on('click', restoreCanvas);
     window.onresize = onResize;
   }
   function onResize() {
@@ -222,12 +222,12 @@
   function brushEnded() {
     if (!d3.event.sourceEvent) return; // Only transition after input.
     var sel = d3.event.selection;
-
     if (!sel) {
       if (!idleTimeout) return idleTimeout = setTimeout(idled, idleDelay);
       xScale.domain(xIdentityDomain);
-    } else {
-      xScale.domain(sel.map(function(d){
+    }
+    else {
+      xScale.domain(sel.map(function (d) {
         return Math.round(xScale.invert(d));
       }));
       brushG.call(brushHandle.move, null);
@@ -237,10 +237,14 @@
   function idled() {
     idleTimeout = null;
   }
+  function restoreCanvas(){
+    xScale.domain(xIdentityDomain);
+    zoom();
+  }
   function zoom() {
     var t = svgD3.transition().duration(duration1);
     x0ScaleNode.transition(t).call(x0Axis);
-    x1ScaleNode.transition(t).call(x0Axis);
+    x1ScaleNode.transition(t).call(x1Axis);
     updateChart(duration1);
   }
 
