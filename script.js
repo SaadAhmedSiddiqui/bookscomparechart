@@ -24,7 +24,7 @@
       outerWidth, outerHeight = 570, innerWidth, innerHeight;
 
   var chartData = null;
-  var chartBox, svgD3, chartGroup, x0ScaleNode, x1ScaleNode;
+  var chartBox, svgD3, drawingG, marksG, x0ScaleNode, x1ScaleNode;
   var book1Bars, connections, book2Bars, brushG;
 
   var xScale, x0Axis, x1Axis;
@@ -40,7 +40,7 @@
   d3.tsv("data-ss.txt", mapData, function(error, data) {
     chartData = data;
     drawChart();
-    updateChart(duration3);
+    updateChart();
   });
 
   function eventBindings(){
@@ -56,12 +56,13 @@
   function createChart(){
     chartBox    = document.getElementById('chartBox');
     svgD3       = d3.select(chartBox).append("svg").attr("class", "chartGroup");
-    chartGroup  = svgD3.append("g");
+    drawingG    = svgD3.append("g").attr("class", "drawing");
+    marksG      = svgD3.append("g").attr("class", "markings");
 
-    book1Bars   = chartGroup.append("g").attr("id", "firstchart");
-    connections = chartGroup.append("g").attr("class", "connections");
-    book2Bars   = chartGroup.append("g").attr("id", "secondchart");
-    brushG      = chartGroup.append("g").attr("class", "brush");
+    book1Bars   = drawingG.append("g").attr("id", "firstchart");
+    connections = drawingG.append("g").attr("class", "connections");
+    book2Bars   = drawingG.append("g").attr("id", "secondchart");
+    brushG      = svgD3.append("g").attr("class", "brush");
 
     xScale  = d3.scaleLinear();
     y0Scale = d3.scaleLinear().domain([0, 100]).range([150, 0]);
@@ -71,14 +72,14 @@
 
 
     // - Book1 xAxis Scale::
-    x0ScaleNode = book1Bars.append("g")
+    x0ScaleNode = marksG.append("g")
         .attr("class", "x0 axis")
-        .attr("transform", "translate(0," + 150 + ")");
+        .attr("transform", "translate("+margin.left+"," + (margin.top+150) + ")");
 
     // - Book2 xAxis Scale::
-    x1ScaleNode = book2Bars.append("g")
+    x1ScaleNode = marksG.append("g")
         .attr("class", "x1 axis")
-        .attr("transform", "translate(0," + 0 + ")");
+        .attr("transform", "translate("+margin.left+"," + (margin.top+300) + ")");
 
     // - Book1 yAxis Scale::
     book1Bars.append("g")
@@ -103,6 +104,13 @@
         .attr("dy", ".31em")
         .style("text-anchor", "end")
         .text("Column10");
+
+    // - Clip Path (Masking) ::
+    /*svgD3.append("defs").append("clipPath")
+        .attr("id", "clip")
+        .append("rect")
+        .attr("width", width)
+        .attr("height", height);*/
   }
   function setLayout(){
     outerWidth = chartBox.offsetWidth;
@@ -113,10 +121,9 @@
     svgD3.attr("width", outerWidth)
         .attr("height", outerHeight);
 
-    book1Bars.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    connections.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    book2Bars.attr("transform", "translate(" + margin.left + "," + (margin.top+300) + ")");
+    drawingG.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
     brushG.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    book2Bars.attr("transform", "translate(0,300)");
   }
   function drawChart() {
 
@@ -125,7 +132,7 @@
     xIdentityDomain = [0, max.peek];
     xScale.domain(xIdentityDomain).range([0, width]);
     x0Axis = d3.axisBottom(xScale).tickValues([1, max.book1]);
-    x1Axis = d3.axisBottom(xScale).tickValues([1, max.book2]);
+    x1Axis = d3.axisTop(xScale).tickValues([1, max.book2]);
     brushHandle.extent([[0, 0], [width, innerHeight-40]]);
 
     // --- Draw Book1 Bar Chart [START] :::
@@ -135,15 +142,6 @@
     book1BarNodes.enter().append("rect")
         .attr("class", "bar")
         .attr("width", 0.5);
-
-    // - render X Axis of Book1 ::
-    x0ScaleNode.call(x0Axis)
-        .selectAll("text")
-        .attr("y", 0)
-        .attr("x", 15)
-        .attr("dy", ".10em")
-        .attr("transform", "rotate(90)")
-        .style("text-anchor", "start");
     // --- Draw Book1 Bar Chart [END] :::
 
     // --- Draw Connections Curves [START] :::
@@ -170,15 +168,6 @@
         .attr("width", 0.5);
 
     book2BarNodes.exit().remove();
-
-    // - render X Axis of Book2 ::
-    x1ScaleNode.call(x1Axis)
-        .selectAll("text")
-        .attr("y", 0)
-        .attr("dy", ".30em")
-        .attr("transform", "rotate(-90)")
-        .style("text-anchor", "start");
-
     // --- Draw Book2 Bar Chart [END] :::
 
     brushG.call(brushHandle);
@@ -217,6 +206,24 @@
           return y1Scale(d.book2_y2) - y1Scale(d.book2_y1);
         });
 
+    // - render X Axis of Book1 ::
+    x0ScaleNode.transition(t).call(x0Axis)
+        .selectAll("text")
+        .attr("x", 10)
+        .attr("y", 0)
+        .attr("dy", 2)
+        .attr("transform", "rotate(90)")
+        .style("text-anchor", "start");
+
+    // - render X Axis of Book2 ::
+    x1ScaleNode.transition(t).call(x1Axis)
+        .selectAll("text")
+        .attr("x", -10)
+        .attr("y", 0)
+        .attr("dy", -2)
+        .attr("transform", "rotate(90)")
+        .style("text-anchor", "end");
+
   }
 
   function brushEnded() {
@@ -243,8 +250,6 @@
   }
   function zoom() {
     var t = svgD3.transition().duration(duration1);
-    x0ScaleNode.transition(t).call(x0Axis);
-    x1ScaleNode.transition(t).call(x1Axis);
     updateChart(duration1);
   }
 
