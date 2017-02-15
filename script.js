@@ -24,6 +24,10 @@
   var max, width, height,
       outerWidth, outerHeight = 570, innerWidth, innerHeight;
 
+  var selectedLine = null;
+  var connColor = '#FFCC66', connHColor = '#ff9600',
+      hoverStrokeWidth = 3, barWidth = 0.5;
+
   var chartData = null;
   var chartBox, svgD3, drawingG, marksG, clipRect, x0ScaleNode, x1ScaleNode;
   var book1Bars, connections, book2Bars, brushG;
@@ -130,9 +134,13 @@
     var book1BarNodes = book1Bars.selectAll(".bar")
         .data(chartData);
 
-    book1BarNodes.enter().append("rect")
+    book1BarNodes.enter().append("line")
         .attr("class", "bar")
-        .attr("width", 0.5);
+        .attr("stroke-width", barWidth)
+        .on("mouseover", mouseOver)
+        .on("mouseout", mouseOut);
+
+    book1BarNodes.exit().remove();
     // --- Draw Book1 Bar Chart [END] :::
 
     // --- Draw Connections Curves [START] :::
@@ -141,20 +149,23 @@
 
     connectionNodes.enter().append("path")
         .attr("class", "connection")
-        .on("click", function (d, i) {
-          console.log(d);
-        });
+        .attr("stroke", connColor)
+        .on("click", selectLineOnClicked)
+        .on("mouseover", mouseOver)
+        .on("mouseout", mouseOut);
 
-    connectionNodes.exit();
+    connectionNodes.exit().remove();
     // --- Draw Connections Curves [END] :::
 
     // --- Draw Book2 Bar Chart [START] :::
     var book2BarNodes = book2Bars.selectAll(".bar")
         .data(chartData);
 
-    book2BarNodes.enter().append("rect")
+    book2BarNodes.enter().append("line")
         .attr("class", "bar")
-        .attr("width", 0.5);
+        .attr("stroke-width", barWidth)
+        .on("mouseover", mouseOver)
+        .on("mouseout", mouseOut);
 
     book2BarNodes.exit().remove();
     // --- Draw Book2 Bar Chart [END] :::
@@ -169,14 +180,17 @@
 
     book1Bars.selectAll(".bar")
         .transition(t)
-        .attr("x", function (d) {
+        .attr("x1", function (d) {
           return xScale(d.book1_page);
         })
-        .attr("y", function (d) {
-          return y0Scale(d.book1_y2);
+        .attr("x2", function (d) {
+          return xScale(d.book1_page);
         })
-        .attr("height", function (d) {
-          return y0Scale(d.book1_y1) - y0Scale(d.book1_y2);
+        .attr("y1", function (d) {
+          return y0Scale(d.book1_y1);
+        })
+        .attr("y2", function (d) {
+          return y0Scale(d.book1_y2);
         });
 
     connections.selectAll("path")
@@ -187,14 +201,17 @@
 
     book2Bars.selectAll(".bar")
         .transition(t)
-        .attr("x", function (d) {
+        .attr("x1", function (d) {
           return xScale(d.book2_page);
         })
-        .attr("y", function (d) {
+        .attr("x2", function (d) {
+          return xScale(d.book2_page);
+        })
+        .attr("y1", function (d) {
           return y1Scale(d.book2_y1);
         })
-        .attr("height", function (d) {
-          return y1Scale(d.book2_y2) - y1Scale(d.book2_y1);
+        .attr("y2", function (d) {
+          return y1Scale(d.book2_y2)
         });
 
     // - render X Axis of Book1 ::
@@ -220,15 +237,15 @@
     if (!d3.event.sourceEvent) return; // Only transition after input.
     var sel = d3.event.selection;
     if (!sel) {
+      selectedLine && deSelectLine();
       return;
     }
-    else {
-      currentXDomain =sel.map(function (d) {
-        return Math.round(xScale.invert(d));
-      });
-      xScale.domain(currentXDomain);
-      brushG.call(brushHandle.move, null);
-    }
+
+    currentXDomain =sel.map(function (d) {
+      return Math.round(xScale.invert(d));
+    });
+    xScale.domain(currentXDomain);
+    brushG.call(brushHandle.move, null);
     zoom();
   }
   function idled() {
@@ -241,9 +258,90 @@
     idleTimeout = setTimeout(idled, idleDelay);
     xScale.domain(xIdentityDomain);
     zoom();
+    selectedLine && deSelectLine();
   }
   function zoom() {
     updateChart(duration1);
+  }
+
+  function getConnections(){
+    return connections.selectAll("path");
+  }
+  function getBars(){
+    return drawingG.selectAll("#firstchart .bar, #secondchart .bar");
+  }
+  function filterSelected(d1, nodesD3){
+    return nodesD3
+        .filter(function(d){
+          return d===d1;
+        });
+  }
+  function mouseOver(d1){
+    filterSelected(d1, getConnections())
+        .attr("stroke", connHColor)
+        .attr("stroke-width", hoverStrokeWidth)
+        .attr("opacity", null);
+
+    filterSelected(d1, getBars())
+        .attr("stroke-width", hoverStrokeWidth)
+        .attr("opacity", null);
+  }
+  function mouseOut(d1){
+    if(selectedLine === d1) return;
+
+    filterSelected(d1, getConnections()).transition()
+        .attr("stroke", connColor)
+        .attr("stroke-width", null)
+        .attr("opacity", opacityOnMouseOut);
+
+    filterSelected(d1, getBars()).transition()
+        .attr("stroke-width", barWidth)
+        .attr("opacity", opacityOnMouseOut);
+
+    function opacityOnMouseOut(d){
+      return d.hidden ? 0 : null
+    }
+  }
+  function selectLineOnClicked(d1){
+    if(d1===selectedLine) return;
+    
+    selectedLine && clearSelectedLine();
+    selectedLine = d1;
+
+    getConnections()
+        .each(function hideOthers(d){
+          d.hidden = d!==d1;
+        })
+        .filter(filterHidden)
+        .attr("opacity", 0);
+
+    getBars()
+        .filter(filterHidden)
+        .attr("opacity", 0);
+
+    function filterHidden(d){
+        return d.hidden;
+    }
+  }
+  function deSelectLine(){
+    clearSelectedLine();
+    makeOtherLinesVisible();
+  }
+  function clearSelectedLine(){
+    var d2 = selectedLine;
+    selectedLine = null;
+    d2.hidden = true;
+    mouseOut(d2);
+  }
+  function makeOtherLinesVisible(){
+    getConnections()
+        .each(function hideOthers(d){
+          delete d.hidden;
+        })
+        .attr("opacity", null);
+
+    getBars()
+        .attr("opacity", null);
   }
 
   function mapData(d) {

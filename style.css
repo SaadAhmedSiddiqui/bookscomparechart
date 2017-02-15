@@ -14,32 +14,17 @@ body {
   stroke-dasharray: 5, 5;
 }
 
-.hover-line {
-  stroke: white;
-  fill: none;
-  stroke-width: 1px;
-}
 .domain {
   stroke-width: 3px;
   stroke: #FFCC66;
 }
 
 .connection{
-  stroke:#FFCC66;
   fill: none;
-}
-.connection:hover {
-  stroke: #ff9600;
-  stroke-width: 3px;
 }
 
 .bar {
-  fill: red;
-}
-
-.bar:hover {
-  fill: red;
-  width: 3px;
+  stroke: red;
 }
 
 .brush .extent {
