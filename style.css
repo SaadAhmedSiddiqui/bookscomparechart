@@ -32,3 +32,12 @@ body {
   fill: blue;
   fill-opacity: .165;
 }
+
+.brush .overlay{
+  cursor: auto !important;
+}
+
+.max-reference-lines{
+  stroke-width: 2;
+  stroke: black;
+}
