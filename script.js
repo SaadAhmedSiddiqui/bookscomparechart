@@ -39,6 +39,8 @@
   var xIdentityDomain, currentXDomain, idleTimeout, idleDelay = 350,
       duration1 = 750, duration2 = 500;
 
+  var toolTipDiv;
+
   createChart();
   eventBindings();
   setLayout();
@@ -61,6 +63,8 @@
   }
 
   function createChart(){
+    toolTipDiv  = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
+
     chartBox    = document.getElementById('chartBox');
     svgD3       = d3.select(chartBox).append("svg").attr("class", "chartGroup");
     brushG      = svgD3.append("g").attr("class", "brush");
@@ -320,6 +324,17 @@
           return d===d1;
         });
   }
+  function showToolTip(d1){
+    var html = 'Book1: #'+d1.book1_page +' ('+d1.book1_y1+'-'+d1.book1_y2+')<br/>'
+        +'Book2: #'+d1.book2_page+''+' ('+d1.book2_y1+'-'+d1.book2_y2+')';
+
+    toolTipDiv
+        .style("opacity", 0.9);
+
+    toolTipDiv.html(html)
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY - 28) + "px");
+  }
   function mouseOver(d1){
     filterSelected(d1, getConnections())
         .attr("stroke", connHColor)
@@ -339,6 +354,7 @@
         .attr("y1", function (d) {  return d.yScale(0)+d.y;   })
         .attr("y2", function (d) {  return d.yScale(100)+d.y; })
         .attr("opacity", null);
+    showToolTip(d1);
   }
   function mouseOut(d1){
     if(selectedLine === d1) return;
@@ -354,6 +370,9 @@
 
     drawingG.selectAll(".dotted-bar-lines")
         .attr("opacity", 0);
+
+    toolTipDiv
+        .style("opacity", 0);
 
     function opacityOnMouseOut(d){
       return d.hidden ? 0.1 : null
@@ -407,6 +426,9 @@
     getBars()
         .attr("stroke-width", barWidth)
         .attr("opacity", null);
+
+    drawingG.selectAll(".dotted-bar-lines")
+        .attr("opacity", 0);
   }
 
   function mapData(d) {
