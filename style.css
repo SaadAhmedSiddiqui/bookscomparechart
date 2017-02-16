@@ -41,3 +41,7 @@ body {
   stroke-width: 5;
   stroke: black;
 }
+.dotted-bar-lines{
+  stroke-dasharray: 3 6;
+  stroke: red;
+}

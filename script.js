@@ -28,7 +28,7 @@
   var connColor = '#FFCC66', connHColor = '#ff9600',
       hoverStrokeWidth = 3, barWidth = 0.5;
 
-  var chartData = null, refLinesData = null;
+  var chartData = null, refLinesData = null, hoverLines = [{}, {}];
   var chartBox, svgD3, drawingG, marksG, clipRect, x0ScaleNode, x1ScaleNode;
   var book1Bars, connections, book2Bars, brushG;
 
@@ -131,15 +131,27 @@
     currentXDomain = xIdentityDomain;
     xScale.domain(xIdentityDomain).range([1, width-1]);
     xScaleIdentity.domain(xIdentityDomain).range([1, width-1]);
-    x0Axis = d3.axisBottom(xScale).tickValues([1, max.book1]);
+    x0Axis = d3.axisBottom(xScale);
     x1Axis = d3.axisTop(xScale).tickValues([1, max.book2]);
     brushHandle.extent([[0, 0], [width, height]]);
     refLinesData = [
-      {x: 1,         y:0,               yScale: y0Scale},
-      {x: max.book1, y:0,               yScale: y0Scale},
-      {x: 1,         y:barMaxHeight*2,  yScale: y1Scale},
-      {x: max.book2, y:barMaxHeight*2,  yScale: y1Scale}
+      {x: 1,         y: 0,              yScale: y0Scale},
+      {x: max.book1, y: 0,              yScale: y0Scale},
+      {x: 1,         y: barMaxHeight*2, yScale: y1Scale},
+      {x: max.book2, y: barMaxHeight*2, yScale: y1Scale}
     ];
+    hoverLines = [
+      {x: 150,  y: 0,               yScale:y0Scale, visible: false},
+      {x: 150,  y: barMaxHeight*2,  yScale:y0Scale, visible: false}
+    ];
+
+    // - Hover Lines ::
+    drawingG.selectAll(".dotted-bar-lines")
+        .data(hoverLines)
+        .enter().insert("line", ":first-child")
+        .attr("clip-path", "url('#clipDrawing')")
+        .attr("class", "dotted-bar-lines")
+        .attr("opacity", 0);
 
     // --- Draw Book1 Bar Chart [START] :::
     var book1BarNodes = book1Bars.selectAll(".bar")
@@ -174,6 +186,7 @@
     book2BarNodes.exit().remove();
     // --- Draw Book2 Bar Chart [END] :::
 
+    // - Append Brush
     brushG.call(brushHandle)
         .select('.overlay')
         .on("dblclick", restoreCanvas);
@@ -188,6 +201,7 @@
   function updateChart(duration){
     var t = svgD3.transition().duration(duration || 0);
 
+    // - render Bars of Book1 ::
     book1Bars.selectAll(".bar")
         .on("mouseover", mouseOver)
         .on("mouseout", mouseOut)
@@ -198,6 +212,7 @@
         .attr("y1", function (d) {  return y0Scale(d.book1_y1);   })
         .attr("y2", function (d) {  return y0Scale(d.book1_y2);   });
 
+    // - render Connection Curves ::
     connections.selectAll("path")
         .on("mouseover", mouseOver)
         .on("mouseout", mouseOut)
@@ -207,6 +222,7 @@
           return "M " + xScale(d.book1_page) + " 150 C " + xScale(d.book1_page) + " 250," + xScale(d.book2_page) + " 220 , " + xScale(d.book2_page) + " " + 300;
         });
 
+    // - render Bars of Book2 ::
     book2Bars.selectAll(".bar")
         .on("mouseover", mouseOver)
         .on("mouseout", mouseOut)
@@ -218,6 +234,7 @@
         .attr("y2", function (d) {  return y1Scale(d.book2_y2);   });
 
     // - render X Axis of Book1 ::
+    x0Axis.tickValues(selectedLine ? [1, selectedLine.book1_page, max.book1] : [1, max.book1] );
     x0ScaleNode.transition(t).call(x0Axis)
         .selectAll("text")
         .attr("x", 10)
@@ -226,6 +243,7 @@
         .style("text-anchor", "start");
 
     // - render X Axis of Book2 ::
+    x1Axis.tickValues(selectedLine ? [1, selectedLine.book2_page, max.book2] : [1, max.book2] );
     x1ScaleNode.transition(t).call(x1Axis)
         .selectAll("text")
         .attr("x", -10)
@@ -233,6 +251,7 @@
         .attr("transform", "rotate(90)")
         .style("text-anchor", "end");
 
+    // - render Reference Lines Min and Max ::
     marksG.selectAll(".max-reference-lines").transition(t)
         .attr("x1", function (d) {  return xScale(d.x);       })
         .attr("x2", function (d) {  return xScale(d.x);       })
@@ -310,6 +329,16 @@
     filterSelected(d1, getBars())
         .attr("stroke-width", hoverStrokeWidth)
         .attr("opacity", null);
+
+    // - render Dotted Bars for book1 and book2 on hover/click ::
+    hoverLines[0].x = d1.book1_page;
+    hoverLines[1].x = d1.book2_page;
+    drawingG.selectAll(".dotted-bar-lines")
+        .attr("x1", function (d) {  return xScale(d.x);       })
+        .attr("x2", function (d) {  return xScale(d.x);       })
+        .attr("y1", function (d) {  return d.yScale(0)+d.y;   })
+        .attr("y2", function (d) {  return d.yScale(100)+d.y; })
+        .attr("opacity", null);
   }
   function mouseOut(d1){
     if(selectedLine === d1) return;
@@ -323,8 +352,11 @@
         .attr("stroke-width", barWidth)
         .attr("opacity", opacityOnMouseOut);
 
+    drawingG.selectAll(".dotted-bar-lines")
+        .attr("opacity", 0);
+
     function opacityOnMouseOut(d){
-      return d.hidden ? 0 : null
+      return d.hidden ? 0.1 : null
     }
   }
   function selectLineOnClicked(d1){
@@ -338,10 +370,13 @@
           d.hidden = d!==d1;
         })
         .filter(filterHidden)
-        .attr("opacity", 0);
+        .attr("opacity", 0.1);
 
     getBars()
         .filter(filterHidden)
+        .attr("opacity", 0.1);
+
+    drawingG.selectAll(".dotted-bar-lines")
         .attr("opacity", 0);
 
     setTimeout(focusOnLine, 0, d1);
