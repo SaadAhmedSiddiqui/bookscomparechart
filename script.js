@@ -128,8 +128,9 @@
     // --- Set Scales on Basis of the chartData ::
     max = maxValues();
     xIdentityDomain = [0, max.peek];
-    xScale.domain(xIdentityDomain).range([1, width]);
-    xScaleIdentity.domain(xIdentityDomain).range([1, width]);
+    currentXDomain = xIdentityDomain;
+    xScale.domain(xIdentityDomain).range([1, width-1]);
+    xScaleIdentity.domain(xIdentityDomain).range([1, width-1]);
     x0Axis = d3.axisBottom(xScale).tickValues([1, max.book1]);
     x1Axis = d3.axisTop(xScale).tickValues([1, max.book2]);
     brushHandle.extent([[0, 0], [width, height]]);

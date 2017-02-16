@@ -15,7 +15,7 @@ body {
 }
 
 .domain {
-  stroke-width: 3px;
+  stroke-width: 3;
   stroke: #FFCC66;
 }
 
@@ -38,6 +38,6 @@ body {
 }
 
 .max-reference-lines{
-  stroke-width: 2;
+  stroke-width: 5;
   stroke: black;
 }
