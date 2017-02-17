@@ -36,10 +36,10 @@
   var y0Scale, y0Axis, y1Scale, y1Axis;
   var brushHandle = d3.brushX().on("end", brushEnded);
 
-  var xIdentityDomain, currentXDomain, idleTimeout, idleDelay = 350,
-      duration1 = 750, duration2 = 500;
+  var xIdentityDomain, currentXDomain, animating = false,
+      duration1 = 700, duration2 = 400;
 
-  var toolTipDiv;
+  var toolTipDiv, layoutPadding = 48;
 
   createChart();
   eventBindings();
@@ -54,6 +54,7 @@
   function eventBindings(){
     d3.select('#resetBtn').on('click', restoreCanvas);
     window.onresize = onResize;
+    window.closeNav = closeNav;
   }
   function onResize() {
     setLayout();
@@ -63,7 +64,7 @@
   }
 
   function createChart(){
-    toolTipDiv  = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
+    toolTipDiv  = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0.9);
 
     chartBox    = document.getElementById('chartBox');
     svgD3       = d3.select(chartBox).append("svg").attr("class", "chartGroup");
@@ -110,7 +111,7 @@
 
   }
   function setLayout(){
-    outerWidth = chartBox.offsetWidth;
+    outerWidth = window.innerWidth - layoutPadding;
     innerWidth = outerWidth - margin.left - margin.right;
     innerHeight = outerHeight - margin.top - margin.bottom;
     width = innerWidth - padding.left - padding.right;
@@ -205,7 +206,12 @@
   function updateChart(duration){
     var t = svgD3.transition().duration(duration || 0);
 
-    // - render Bars of Book1 ::
+    animating = true;
+    t.on('end', function(){
+      animating = false;
+    });
+
+    // - render Bars of Book1 and Book2 ::
     book1Bars.selectAll(".bar")
         .on("mouseover", mouseOver)
         .on("mouseout", mouseOut)
@@ -261,19 +267,15 @@
         .attr("x2", function (d) {  return xScale(d.x);       })
         .attr("y1", function (d) {  return d.yScale(0)+d.y;   })
         .attr("y2", function (d) {  return d.yScale(100)+d.y; });
+
+    return t;
   }
 
   function brushEnded() {
-    console.log('test2');
     if (!d3.event.sourceEvent) return; // Only transition after input.
     var sel = d3.event.selection;
     if (!sel) {
-      if(selectedLine){
-        deSelectLine();
-
-        xScale.domain(xIdentityDomain);
-        zoom();
-      }
+      selectedLine && restoreCanvas();
       return;
     }
 
@@ -281,34 +283,29 @@
       return Math.round(xScale.invert(d));
     });
     xScale.domain(currentXDomain);
-
     zoom();
-  }
-  function idled() {
-    idleTimeout = null;
   }
   function restoreCanvas(){
-    if (idleTimeout)  return;
+    if(animating) return;
 
-    idleTimeout = setTimeout(idled, idleDelay);
+    if(selectedLine) {
+      selectedLine = null;
+      makeLinesVisible();
+    }
     xScale.domain(xIdentityDomain);
-    zoom();
-    selectedLine && deSelectLine();
+    setTimeout(zoom, 0);
   }
   function zoom() {
     brushG.call(brushHandle.move, null);
     updateChart(duration1);
   }
   function focusOnLine(d1){
-    if (idleTimeout)  return;
     var a = d1.book1_page;
     var b = d1.book2_page;
     var min = Math.min(a, b)-xScaleIdentity.invert(5);
     var max = Math.max(a, b)+xScaleIdentity.invert(5);
 
-    idleTimeout = setTimeout(idled, idleDelay);
     xScale.domain([min, max]);
-
     zoom();
   }
 
@@ -329,11 +326,15 @@
         +'Book2: #'+d1.book2_page+''+' ('+d1.book2_y1+'-'+d1.book2_y2+')';
 
     toolTipDiv
-        .style("opacity", 0.9);
+        .style("display", null);
 
     toolTipDiv.html(html)
         .style("left", (d3.event.pageX) + "px")
         .style("top", (d3.event.pageY - 28) + "px");
+  }
+  function hideToolTip(){
+    toolTipDiv
+        .style("display", "none");
   }
   function mouseOver(d1){
     filterSelected(d1, getConnections())
@@ -371,8 +372,7 @@
     drawingG.selectAll(".dotted-bar-lines")
         .attr("opacity", 0);
 
-    toolTipDiv
-        .style("opacity", 0);
+    hideToolTip();
 
     function opacityOnMouseOut(d){
       return d.hidden ? 0.1 : null
@@ -398,15 +398,13 @@
     drawingG.selectAll(".dotted-bar-lines")
         .attr("opacity", 0);
 
+    hideToolTip();
     setTimeout(focusOnLine, 0, d1);
+    openPanel();
 
     function filterHidden(d){
         return d.hidden;
     }
-  }
-  function deSelectLine(){
-    makeOtherLinesVisible();
-    selectedLine = null;
   }
   function clearSelectedLine(){
     var d2 = selectedLine;
@@ -414,7 +412,7 @@
     d2.hidden = true;
     mouseOut(d2);
   }
-  function makeOtherLinesVisible(){
+  function makeLinesVisible(){
     getConnections()
         .each(function hideOthers(d){
           delete d.hidden;
@@ -429,7 +427,38 @@
 
     drawingG.selectAll(".dotted-bar-lines")
         .attr("opacity", 0);
+
+    hideToolTip();
   }
+
+
+  //star panel
+  function openPanel() {
+    if(animating)   return;
+
+    animating = true;
+    document.getElementById("mySidenav").style.width = "250px";
+    document.getElementById("main").style.marginLeft = "250px";
+    setTimeout(function(){
+      animating = false;
+    }, 500);
+  }
+
+  function closeNav() {
+    if(animating)   return;
+
+    animating = true;
+    document.getElementById("mySidenav").style.width = "0";
+    document.getElementById("main").style.marginLeft= "0";
+    setTimeout(function(){
+      onResize();
+      restoreCanvas();
+      animating = false;
+    }, 500);
+  }
+
+
+  //end panel
 
   function mapData(d) {
     // d.column16 = +d.column16;
