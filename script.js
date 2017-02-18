@@ -8,22 +8,25 @@
   // x-axis: decided by maxValues function which returns {book1, book2, peek}
   // vertical layout :: 60 + 60
 
-  var url = 'https://raw.githubusercontent.com/OpenArabic/0300AH/master/data/0255Jahiz/0255Jahiz.Hayawan/0255Jahiz.Hayawan.Shamela0023775-ara1.inProgress';
+  var url = {
+    book1: 'https://raw.githubusercontent.com/OpenArabic/0300AH/master/data/0255Jahiz/0255Jahiz.Hayawan/0255Jahiz.Hayawan.Shamela0023775-ara1.inProgress',
+    book2: 'https://raw.githubusercontent.com/OpenArabic/0500AH/master/data/0429AbuMansurThacalibi/0429AbuMansurThacalibi.ThimarQulub/0429AbuMansurThacalibi.ThimarQulub.Shamela0006896-ara1.completed'
+  };
   var margin = {
-        top: 60,
+        top: 40,
         right: 20,
         bottom: 20,
         left: 60
       },
       padding = {
-        top: 60,
+        top: 40,
         right: 0,
-        bottom: 60,
+        bottom: 40,
         left: 60
       },
       barMaxHeight = 150;
   var max, width, height,
-      outerWidth, outerHeight = 570, innerWidth, innerHeight;
+      outerWidth, outerHeight = 530, innerWidth, innerHeight;
 
   var selectedLine = null;
   var connColor = '#FFCC66', connHColor = '#ff9600',
@@ -40,11 +43,8 @@
   var xIdentityDomain, currentXDomain, animating = false,
       duration1 = 700, duration2 = 400;
 
-  var toolTipDiv, layoutPadding = 48, sidePanelWidth = 350, isPanelOpened;
+  var toolTipDiv, layoutPadding = 48, sidePanelHeight = 400, isPanelOpened;
 
-  createChart();
-  eventBindings();
-  setLayout();
 
   d3.tsv("data-ss.txt", mapData, function(error, data) {
     chartData = data;
@@ -52,14 +52,21 @@
     updateChart();
   });
 
+  createChart();
+  setLayout();
+  eventBindings();
+
   function eventBindings(){
-    d3.select('#resetBtn').on('click', restoreCanvas);
-    d3.select('#closeBtn').on('click', closeNav);
+    d3.select('#closeBtn').on('click', closePanel);
     window.onresize = onResize;
 
-    d3.text(url, function(error, text) {
+    d3.text(url.book1, function(error, text) {
       if (error) throw error;
-      d3.select('#bookContent').text(text);
+      d3.select('#book1Content').text(text);
+    });
+    d3.text(url.book2, function(error, text) {
+      if (error) throw error;
+      d3.select('#book2Content').text(text);
     });
   }
   function onResize() {
@@ -69,7 +76,7 @@
   }
 
   function createChart(){
-    toolTipDiv  = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0.9);
+    toolTipDiv  = d3.select("body").append("div").attr("class", "tooltip").style("display", "none").style("opacity", 0.9);
 
     chartBox    = document.getElementById('chartBox');
     svgD3       = d3.select(chartBox).append("svg").attr("class", "chartGroup");
@@ -117,11 +124,12 @@
   }
 
   function setLayout(){
-    outerWidth = isPanelOpened ? (window.innerWidth - layoutPadding - sidePanelWidth) : chartBox.offsetWidth;
+    //outerWidth = isPanelOpened ? (window.innerWidth - layoutPadding - sidePanelWidth) : chartBox.offsetWidth;
+    outerWidth = chartBox.offsetWidth;
     innerWidth = outerWidth - margin.left - margin.right;
     innerHeight = outerHeight - margin.top - margin.bottom;
     width = innerWidth - padding.left - padding.right;
-    height = innerHeight-40;
+    height = innerHeight-20;
 
     svgD3.attr("width", outerWidth)
         .attr("height", outerHeight);
@@ -281,7 +289,7 @@
     if (!d3.event.sourceEvent) return; // Only transition after input.
     var sel = d3.event.selection;
     if (!sel) {
-      selectedLine && closeNav();
+      selectedLine && closePanel();
       return;
     }
 
@@ -446,24 +454,31 @@
     if(animating)   return;
 
     isPanelOpened = true;
-    animating = true;
-    document.getElementById("mySidenav").style.width = sidePanelWidth+"px";
-    document.getElementById("main").style.marginLeft = sidePanelWidth+"px";
+    //d3.select("#bookContent").style("width", null);
+    d3.select('#mySidenav').style("display", null);
+    setTimeout(function(){
+
+      d3.select('#mySidenav').style("height", sidePanelHeight+'px');
+    //document.getElementById("mySidenav").style.width = sidePanelWidth+"px";
+    //document.getElementById("main").style.marginLeft = sidePanelWidth+"px";
     setLayout();
     drawChart();
-    setTimeout(function(){
+    /*setTimeout(function(){
       animating = false;
-    }, 500);
+    }, 500);*/
+    });
   }
 
-  function closeNav() {
+  function closePanel() {
     if(animating)   return;
 
-    isPanelOpened = false;
     animating = true;
-    document.getElementById("mySidenav").style.width = "0";
-    document.getElementById("main").style.marginLeft= "0";
+    isPanelOpened = false;
+    d3.select('#mySidenav').style("height", null);
+    //document.getElementById("mySidenav").style.width = "0";
+    //document.getElementById("main").style.marginLeft= "0";
     setTimeout(function(){
+      d3.select('#mySidenav').style("display", "none");
       animating = false;
       restoreCanvas();
       setLayout();

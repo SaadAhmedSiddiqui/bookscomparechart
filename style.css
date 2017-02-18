@@ -59,59 +59,43 @@ div.tooltip {
   margin-left: 6px;
 }
 
-    /*start panel css*/
-
-
-.sidenav {
-  height: 100%;
-  width: 0;
-  position: fixed;
+/*--Books View Bottom Panel -- [START]--*/
+.bottom-panel {
+  height: 0;
   z-index: 1;
-  top: 0;
-  left: 0;
   background-color: #111;
-  overflow-x: hidden;
+  overflow: hidden;
   transition: 0.5s;
-  padding-top: 60px;
+  margin-bottom: 20px;
 }
-
-.sidenav a, .sidenav .book-content {
-  padding: 4px 8px 8px 12px;
-  text-decoration: none;
-  display: block;
-  transition: 0.3s
-}
-.sidenav .book-content{
-  margin-top: 22px;
+.bottom-panel .book-content {
+  padding: 0 8px;
+  transition: 0.3s;
+  width: calc(50% - 20px);
+  height: calc(100% - 50px);
   color: #afafaf;
   font-size: 14px;
+  display: inline-block;
+  overflow-y: auto;
 }
-.sidenav a{
+.bottom-panel .closebtn {
   color: #818181;
-  font-size: 25px;
+  font-size: 36px;
+  margin-right: 12px;
+  padding: 2px 5px;
+  text-decoration: none;
+  display: block;
+  transition: 0.3s;
+  text-align: right;
 }
-.sidenav a:hover, .offcanvas a:focus{
+.bottom-panel a.closebtn:hover{
   color: #f1f1f1;
 }
-
-.sidenav .closebtn {
-  position: absolute;
-  top: 0;
-  right: 18px;
-  font-size: 36px;
-  margin-left: 50px;
-}
-
-#main {
+/*#main {
   transition: margin-left 0.5s;
-  padding: 16px;
-}
-
+  padding: 10px;
+}*/
 @media screen and (max-height: 450px) {
-  .sidenav {padding-top: 15px;}
-  .sidenav a {font-size: 18px;}
-  .sidenav .book-content {font-size: 12px;}
+  .bottom-panel .book-content {font-size: 12px;}
 }
-
-
-  /*end panel css*/
+/*--Books View Bottom Panel -- [END]--*/
