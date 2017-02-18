@@ -75,15 +75,21 @@ div.tooltip {
   padding-top: 60px;
 }
 
-.sidenav a {
-  padding: 8px 8px 8px 32px;
+.sidenav a, .sidenav .book-content {
+  padding: 4px 8px 8px 12px;
   text-decoration: none;
-  font-size: 25px;
-  color: #818181;
   display: block;
   transition: 0.3s
 }
-
+.sidenav .book-content{
+  margin-top: 22px;
+  color: #afafaf;
+  font-size: 14px;
+}
+.sidenav a{
+  color: #818181;
+  font-size: 25px;
+}
 .sidenav a:hover, .offcanvas a:focus{
   color: #f1f1f1;
 }
@@ -91,7 +97,7 @@ div.tooltip {
 .sidenav .closebtn {
   position: absolute;
   top: 0;
-  right: 25px;
+  right: 18px;
   font-size: 36px;
   margin-left: 50px;
 }
@@ -104,6 +110,7 @@ div.tooltip {
 @media screen and (max-height: 450px) {
   .sidenav {padding-top: 15px;}
   .sidenav a {font-size: 18px;}
+  .sidenav .book-content {font-size: 12px;}
 }
 
 

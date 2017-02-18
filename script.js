@@ -8,6 +8,7 @@
   // x-axis: decided by maxValues function which returns {book1, book2, peek}
   // vertical layout :: 60 + 60
 
+  var url = 'https://raw.githubusercontent.com/OpenArabic/0300AH/master/data/0255Jahiz/0255Jahiz.Hayawan/0255Jahiz.Hayawan.Shamela0023775-ara1.inProgress';
   var margin = {
         top: 60,
         right: 20,
@@ -39,7 +40,7 @@
   var xIdentityDomain, currentXDomain, animating = false,
       duration1 = 700, duration2 = 400;
 
-  var toolTipDiv, layoutPadding = 48;
+  var toolTipDiv, layoutPadding = 48, sidePanelWidth = 350, isPanelOpened;
 
   createChart();
   eventBindings();
@@ -53,13 +54,17 @@
 
   function eventBindings(){
     d3.select('#resetBtn').on('click', restoreCanvas);
+    d3.select('#closeBtn').on('click', closeNav);
     window.onresize = onResize;
-    window.closeNav = closeNav;
+
+    d3.text(url, function(error, text) {
+      if (error) throw error;
+      d3.select('#bookContent').text(text);
+    });
   }
   function onResize() {
     setLayout();
     drawChart();
-    xScale.domain(currentXDomain);
     updateChart(duration2);
   }
 
@@ -110,8 +115,9 @@
         .append("rect");
 
   }
+
   function setLayout(){
-    outerWidth = window.innerWidth - layoutPadding;
+    outerWidth = isPanelOpened ? (window.innerWidth - layoutPadding - sidePanelWidth) : chartBox.offsetWidth;
     innerWidth = outerWidth - margin.left - margin.right;
     innerHeight = outerHeight - margin.top - margin.bottom;
     width = innerWidth - padding.left - padding.right;
@@ -127,15 +133,13 @@
 
     clipRect.attr("width", width)
         .attr("height", height);
-  }
-  function drawChart() {
 
     // --- Set Scales on Basis of the chartData ::
     max = maxValues();
     xIdentityDomain = [0, max.peek];
-    currentXDomain = xIdentityDomain;
-    xScale.domain(xIdentityDomain).range([1, width-1]);
-    xScaleIdentity.domain(xIdentityDomain).range([1, width-1]);
+    currentXDomain || (currentXDomain = xIdentityDomain);
+    xScale.domain(currentXDomain).range([1, width-1]);
+    xScaleIdentity.domain(currentXDomain).range([1, width-1]);
     x0Axis = d3.axisBottom(xScale);
     x1Axis = d3.axisTop(xScale).tickValues([1, max.book2]);
     brushHandle.extent([[0, 0], [width, height]]);
@@ -149,6 +153,8 @@
       {x: 150,  y: 0,               yScale:y0Scale, visible: false},
       {x: 150,  y: barMaxHeight*2,  yScale:y0Scale, visible: false}
     ];
+  }
+  function drawChart() {
 
     // - Hover Lines ::
     drawingG.selectAll(".dotted-bar-lines")
@@ -275,7 +281,7 @@
     if (!d3.event.sourceEvent) return; // Only transition after input.
     var sel = d3.event.selection;
     if (!sel) {
-      selectedLine && restoreCanvas();
+      selectedLine && closeNav();
       return;
     }
 
@@ -292,7 +298,8 @@
       selectedLine = null;
       makeLinesVisible();
     }
-    xScale.domain(xIdentityDomain);
+    currentXDomain = xIdentityDomain;
+    xScale.domain(currentXDomain);
     setTimeout(zoom, 0);
   }
   function zoom() {
@@ -305,7 +312,8 @@
     var min = Math.min(a, b)-xScaleIdentity.invert(5);
     var max = Math.max(a, b)+xScaleIdentity.invert(5);
 
-    xScale.domain([min, max]);
+    currentXDomain = [min, max];
+    xScale.domain(currentXDomain);
     zoom();
   }
 
@@ -380,6 +388,8 @@
   }
   function selectLineOnClicked(d1){
     if(d1===selectedLine) return;
+    openPanel();
+    setPanelContent(d1);
 
     selectedLine && clearSelectedLine();
     selectedLine = d1;
@@ -400,7 +410,6 @@
 
     hideToolTip();
     setTimeout(focusOnLine, 0, d1);
-    openPanel();
 
     function filterHidden(d){
         return d.hidden;
@@ -436,9 +445,12 @@
   function openPanel() {
     if(animating)   return;
 
+    isPanelOpened = true;
     animating = true;
-    document.getElementById("mySidenav").style.width = "250px";
-    document.getElementById("main").style.marginLeft = "250px";
+    document.getElementById("mySidenav").style.width = sidePanelWidth+"px";
+    document.getElementById("main").style.marginLeft = sidePanelWidth+"px";
+    setLayout();
+    drawChart();
     setTimeout(function(){
       animating = false;
     }, 500);
@@ -447,14 +459,19 @@
   function closeNav() {
     if(animating)   return;
 
+    isPanelOpened = false;
     animating = true;
     document.getElementById("mySidenav").style.width = "0";
     document.getElementById("main").style.marginLeft= "0";
     setTimeout(function(){
-      onResize();
-      restoreCanvas();
       animating = false;
+      restoreCanvas();
+      setLayout();
+      drawChart();
     }, 500);
+  }
+
+  function setPanelContent(d1){
   }
 
 
