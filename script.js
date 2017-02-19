@@ -60,6 +60,7 @@
     d3.select('#closeBtn').on('click', closePanel);
     window.onresize = onResize;
 
+    setTimeout(function(){
     d3.text(url.book1, function(error, text) {
       if (error) throw error;
       d3.select('#book1Content').text(text);
@@ -67,6 +68,7 @@
     d3.text(url.book2, function(error, text) {
       if (error) throw error;
       d3.select('#book2Content').text(text);
+    });
     });
   }
   function onResize() {
@@ -147,7 +149,7 @@
     xIdentityDomain = [0, max.peek];
     currentXDomain || (currentXDomain = xIdentityDomain);
     xScale.domain(currentXDomain).range([1, width-1]);
-    xScaleIdentity.domain(currentXDomain).range([1, width-1]);
+    xScaleIdentity.domain(xIdentityDomain).range([1, width-1]);
     x0Axis = d3.axisBottom(xScale);
     x1Axis = d3.axisTop(xScale).tickValues([1, max.book2]);
     brushHandle.extent([[0, 0], [width, height]]);
@@ -454,19 +456,19 @@
     if(animating)   return;
 
     isPanelOpened = true;
-    //d3.select("#bookContent").style("width", null);
-    d3.select('#mySidenav').style("display", null);
-    setTimeout(function(){
-
-      d3.select('#mySidenav').style("height", sidePanelHeight+'px');
-    //document.getElementById("mySidenav").style.width = sidePanelWidth+"px";
-    //document.getElementById("main").style.marginLeft = sidePanelWidth+"px";
     setLayout();
     drawChart();
+    //d3.select("#bookContent").style("width", null);
+    setTimeout(function(){
+      d3.select('#mySidenav').style("opacity", null);
+
+      //d3.select('#mySidenav').style("height", sidePanelHeight+'px');
+    //document.getElementById("mySidenav").style.width = sidePanelWidth+"px";
+    //document.getElementById("main").style.marginLeft = sidePanelWidth+"px";
     /*setTimeout(function(){
       animating = false;
     }, 500);*/
-    });
+    },duration1);
   }
 
   function closePanel() {
@@ -474,15 +476,15 @@
 
     animating = true;
     isPanelOpened = false;
-    d3.select('#mySidenav').style("height", null);
+    //d3.select('#mySidenav').style("height", null);
     //document.getElementById("mySidenav").style.width = "0";
     //document.getElementById("main").style.marginLeft= "0";
+    animating = false;
+    restoreCanvas();
+    setLayout();
+    drawChart();
     setTimeout(function(){
-      d3.select('#mySidenav').style("display", "none");
-      animating = false;
-      restoreCanvas();
-      setLayout();
-      drawChart();
+      d3.select('#mySidenav').style("opacity", 0);
     }, 500);
   }
 

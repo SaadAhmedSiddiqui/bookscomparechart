@@ -61,8 +61,7 @@ div.tooltip {
 
 /*--Books View Bottom Panel -- [START]--*/
 .bottom-panel {
-  height: 0;
-  z-index: 1;
+  height: 400px;
   background-color: #111;
   overflow: hidden;
   transition: 0.5s;
