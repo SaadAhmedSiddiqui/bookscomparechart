@@ -12,6 +12,23 @@
     book1: 'https://raw.githubusercontent.com/OpenArabic/0300AH/master/data/0255Jahiz/0255Jahiz.Hayawan/0255Jahiz.Hayawan.Shamela0023775-ara1.inProgress',
     book2: 'https://raw.githubusercontent.com/OpenArabic/0500AH/master/data/0429AbuMansurThacalibi/0429AbuMansurThacalibi.ThimarQulub/0429AbuMansurThacalibi.ThimarQulub.Shamela0006896-ara1.completed'
   };
+  var texts = {
+    book1: null,
+    book2: null
+  };
+  var book1Selector, book2Selector;
+
+  marked.setOptions({
+    renderer: new marked.Renderer(),
+    gfm: true,
+    tables: true,
+    breaks: false,
+    pedantic: false,
+    sanitize: false,
+    smartLists: true,
+    smartypants: false
+  });
+
   var margin = {
         top: 40,
         right: 20,
@@ -46,8 +63,10 @@
   var toolTipDiv, layoutPadding = 48, sidePanelHeight = 400, isPanelOpened;
 
 
-  d3.tsv("data-ss.txt", mapData, function(error, data) {
+  d3.tsv("data-live.txt", mapData, function(error, data) {
     chartData = data;
+    console.log(data[3]);
+    window.a = data[3];
     drawChart();
     updateChart();
   });
@@ -56,21 +75,84 @@
   setLayout();
   eventBindings();
 
-  function eventBindings(){
+  function eventBindings() {
     d3.select('#closeBtn').on('click', closePanel);
     window.onresize = onResize;
 
-    setTimeout(function(){
+    d3.select( '#book1Loader' ).style("display", null);
     d3.text(url.book1, function(error, text) {
+      d3.select( '#book1Loader' ).style("display", "none");
       if (error) throw error;
-      d3.select('#book1Content').text(text);
+
+      text = filterNoise(text);
+      texts.book1 = text;
+      text = parse(text);
+      setTimeout(function() {
+        d3.select( '#book1Content' )
+            .html( text )
+            .style( "display", null );
+        book1Selector && setTimeout(book1Selector, 0);
+      }, 0);
     });
+
+    d3.select( '#book2Loader' ).style("display", null);
     d3.text(url.book2, function(error, text) {
+      d3.select( '#book2Loader').style("display", "none");
       if (error) throw error;
-      d3.select('#book2Content').text(text);
+      //var text = localStorage.getItem("test");
+
+      text = filterNoise(text);
+      texts.book2 = text;
+      text = parse(text);
+      setTimeout(function() {
+        d3.select( '#book2Content' )
+            .html( text )
+            .style( "display", null );
+        book2Selector && setTimeout(book2Selector, 0);
+      }, 0);
     });
-    });
+    /*$.ajax({
+     url: url.book1,
+     success: function (mdText) {
+     d3.select('#book1Content').text(mdText);
+     }
+     });
+     $.ajax({
+     url: url.book2,
+     success: function (mdText) {
+     d3.select('#book2Content').text(mdText);
+     }
+     });*/
   }
+  function filterNoise(text){
+    text = text.slice(0, 5000);
+    text = text.replace(/\n~~/g, " ");
+    window.text = text;
+    return text;
+  }
+  function parse(text){
+    text = marked(text);
+    return text;
+  }
+  function setPanelContent(d1){
+    var t = "وبناء هذا الكتاب على ذكر أشياء مضافة ومنسوبة إلى أشياء مختلفة يتمثل";
+    if(d3.select( '#book2Loader' ).style("display") === "none"){
+      selectPara(d3.select( '#book2Content' ), t, texts.book2);
+    } else{
+      book2Selector = selectPara.bind(null, d3.select( '#book2Content' ), t, texts.book2);
+    }
+  }
+  function selectPara(contentNodeD3, text, content){
+    content = content.replace(text, '<selection>$&</selection>');
+    contentNodeD3.html( parse(content) );
+    setTimeout(function(){
+      var selectionNodeD3 = contentNodeD3.select('selection');
+      var scrollTop = selectionNodeD3.property("offsetTop") - contentNodeD3.property("offsetTop");
+      contentNodeD3.property("scrollTop", scrollTop);
+      selectText(selectionNodeD3.node());
+    }, 0);
+  }
+
   function onResize() {
     setLayout();
     drawChart();
@@ -422,7 +504,7 @@
     setTimeout(focusOnLine, 0, d1);
 
     function filterHidden(d){
-        return d.hidden;
+      return d.hidden;
     }
   }
   function clearSelectedLine(){
@@ -458,28 +540,16 @@
     isPanelOpened = true;
     setLayout();
     drawChart();
-    //d3.select("#bookContent").style("width", null);
+    d3.select("#mySidenav").style("display", null);
     setTimeout(function(){
       d3.select('#mySidenav').style("opacity", null);
-
-      //d3.select('#mySidenav').style("height", sidePanelHeight+'px');
-    //document.getElementById("mySidenav").style.width = sidePanelWidth+"px";
-    //document.getElementById("main").style.marginLeft = sidePanelWidth+"px";
-    /*setTimeout(function(){
-      animating = false;
-    }, 500);*/
-    },duration1);
+    }, duration1);
   }
 
   function closePanel() {
     if(animating)   return;
 
-    animating = true;
     isPanelOpened = false;
-    //d3.select('#mySidenav').style("height", null);
-    //document.getElementById("mySidenav").style.width = "0";
-    //document.getElementById("main").style.marginLeft= "0";
-    animating = false;
     restoreCanvas();
     setLayout();
     drawChart();
@@ -488,7 +558,19 @@
     }, 500);
   }
 
-  function setPanelContent(d1){
+  function selectText(textNode){
+    var range;
+    if (document.body.createTextRange) { // ms
+      range = document.body.createTextRange();
+      range.moveToElementText( textNode );
+      range.select();
+    } else if (window.getSelection) {
+      var selection = window.getSelection();
+      range = document.createRange();
+      range.selectNodeContents( textNode );
+      selection.removeAllRanges();
+      selection.addRange( range );
+    }
   }
 
 
@@ -503,7 +585,9 @@
       book1_y1    : +d.column11,
       book1_y2    : +d.column12,
       book2_y1    : +d.column13,
-      book2_y2    : +d.column14
+      book2_y2    : +d.column14,
+      book1_content: d.column15,
+      book2_content: d.column16
     };
   }
   function maxValues(){
