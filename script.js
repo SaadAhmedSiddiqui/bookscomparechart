@@ -8,15 +8,25 @@
   // x-axis: decided by maxValues function which returns {book1, book2, peek}
   // vertical layout :: 60 + 60
 
-  var url = {
-    book1: 'https://raw.githubusercontent.com/OpenArabic/0300AH/master/data/0255Jahiz/0255Jahiz.Hayawan/0255Jahiz.Hayawan.Shamela0023775-ara1.inProgress',
-    book2: 'https://raw.githubusercontent.com/OpenArabic/0500AH/master/data/0429AbuMansurThacalibi/0429AbuMansurThacalibi.ThimarQulub/0429AbuMansurThacalibi.ThimarQulub.Shamela0006896-ara1.completed'
+  var books = {
+    book1: {
+      nodeId  : '#book1Content',
+      url     : 'https://raw.githubusercontent.com/OpenArabic/0300AH/master/data/0255Jahiz/0255Jahiz.Hayawan/0255Jahiz.Hayawan.Shamela0023775-ara1.inProgress',
+      text    : null,
+      loading : false,
+      selector: null
+    },
+    book2: {
+      nodeId  : '#book2Content',
+      url     :'https://raw.githubusercontent.com/OpenArabic/0500AH/master/data/0429AbuMansurThacalibi/0429AbuMansurThacalibi.ThimarQulub/0429AbuMansurThacalibi.ThimarQulub.Shamela0006896-ara1.completed',
+      text    : null,
+      loading : false,
+      selector: null
+    }
   };
-  var texts = {
-    book1: null,
-    book2: null
-  };
-  var book1Selector, book2Selector;
+  var clipPathId = "clipDrawing";
+  var clipPath = "url('#clipDrawing')";
+  window.books = books;
 
   marked.setOptions({
     renderer: new marked.Renderer(),
@@ -63,10 +73,10 @@
   var toolTipDiv, layoutPadding = 48, sidePanelHeight = 400, isPanelOpened;
 
 
-  d3.tsv("data-live.txt", mapData, function(error, data) {
+  d3.tsv("data-live.txt", mapData, function (error, data) {
     chartData = data;
     console.log(data[3]);
-    window.a = data[3];
+    window.itemText = data[3];
     drawChart();
     updateChart();
   });
@@ -79,74 +89,91 @@
     d3.select('#closeBtn').on('click', closePanel);
     window.onresize = onResize;
 
-    d3.select( '#book1Loader' ).style("display", null);
-    d3.text(url.book1, function(error, text) {
-      d3.select( '#book1Loader' ).style("display", "none");
-      if (error) throw error;
-
-      text = filterNoise(text);
-      texts.book1 = text;
-      text = parse(text);
-      setTimeout(function() {
-        d3.select( '#book1Content' )
-            .html( text )
-            .style( "display", null );
-        book1Selector && setTimeout(book1Selector, 0);
-      }, 0);
-    });
-
-    d3.select( '#book2Loader' ).style("display", null);
-    d3.text(url.book2, function(error, text) {
-      d3.select( '#book2Loader').style("display", "none");
-      if (error) throw error;
-      //var text = localStorage.getItem("test");
-
-      text = filterNoise(text);
-      texts.book2 = text;
-      text = parse(text);
-      setTimeout(function() {
-        d3.select( '#book2Content' )
-            .html( text )
-            .style( "display", null );
-        book2Selector && setTimeout(book2Selector, 0);
-      }, 0);
-    });
-    /*$.ajax({
-     url: url.book1,
-     success: function (mdText) {
-     d3.select('#book1Content').text(mdText);
-     }
-     });
-     $.ajax({
-     url: url.book2,
-     success: function (mdText) {
-     d3.select('#book2Content').text(mdText);
-     }
-     });*/
+    loadBook("book1");
+    setTimeout(loadBook, 200, "book2");
   }
+  function loadBook(bookName){
+    var context = books[bookName];
+
+    context.loading = true;
+    d3.select("#"+bookName+"Loader").style("display", null);
+    d3.text(context.url, function(error, text) {
+      if (error) throw error;
+      context.loading = false;
+
+      text = filterNoise(text);
+      context.text = text;//.slice(35000,40000);
+      text = parse(text);
+      setTimeout(function () {
+        var contentNodeD3 = d3.select(context.nodeId).style("display", null);
+        d3.select("#"+bookName+"Loader").style("display", "none");
+        context.selector ? context.selector(context.text) : contentNodeD3.html(text);
+      }, 0);
+    });
+  }
+
+  function deNormalize(text){
+    text = text.replace(/-+/g, "");           // removes dashes
+    text = text.replace(/ +/g, " ").trim();   // remove possible double spaces
+    // -------------------------------------
+
+    var alifs     = '[إأٱآا]';
+    var alifRepl  = '[إأٱآا]';
+    // -------------------------------------
+    var alifMaqsura     = '[يى]';
+    var alifMaqsuraRepl = '[يى]';
+    // -------------------------------------
+    var taMarbutas      = 'ة';
+    var taMarbutasRepl  = '[هة]';
+    // -------------------------------------
+    var hamzas      = '[ؤئء]';
+    var hamzasRepl  = '[ؤئءوي]';
+    // -------------------------------------
+
+    // Applying deNormalization ::
+    text = text.replace(new RegExp(alifs, 'g'), alifRepl);
+    text = text.replace(new RegExp(alifMaqsura, 'g'), alifMaqsuraRepl);
+    text = text.replace(new RegExp(taMarbutas, 'g'), taMarbutasRepl);
+    text = text.replace(new RegExp(hamzas, 'g'), hamzasRepl);
+    // -------------------------------------
+
+    text = text.replace(/ /g, "[\\s\\w\\#\\n\\@\\$\\|\\(\\)]+");
+    // -------------------------------------
+
+    return new RegExp(text);
+  }
+  window.deNormalize = deNormalize;
   function filterNoise(text){
-    text = text.slice(0, 5000);
     text = text.replace(/\n~~/g, " ");
-    window.text = text;
+    text = text.replace(/  +/g, " ");
+    text = text.replace(/### \|+/g, function(match){
+      return "#"+match.slice(4).replace(/\|/g, "#");
+    });
     return text;
   }
   function parse(text){
     text = marked(text);
     return text;
   }
-  function setPanelContent(d1){
-    var t = "وبناء هذا الكتاب على ذكر أشياء مضافة ومنسوبة إلى أشياء مختلفة يتمثل";
-    if(d3.select( '#book2Loader' ).style("display") === "none"){
-      selectPara(d3.select( '#book2Content' ), t, texts.book2);
+  function setPanelContent(bookName, d1){
+    //var t = "وبناء هذا الكتاب على ذكر أشياء مضافة ومنسوبة إلى أشياء
+
+    var context = books[bookName];
+    var contentTxt = d1[bookName+"_content"];
+    if(context.loading){
+      context.selector = selectPara.bind(null, context.nodeId, contentTxt);
     } else{
-      book2Selector = selectPara.bind(null, d3.select( '#book2Content' ), t, texts.book2);
+      selectPara(context.nodeId, contentTxt, context.text);
     }
   }
-  function selectPara(contentNodeD3, text, content){
-    content = content.replace(text, '<selection>$&</selection>');
+  function selectPara(contentNodeSelector, itemText, content){
+    var contentNodeD3 = d3.select(contentNodeSelector);
+    content = content.replace(itemText, '<selection>$&</selection>');
     contentNodeD3.html( parse(content) );
     setTimeout(function(){
       var selectionNodeD3 = contentNodeD3.select('selection');
+      if(!selectionNodeD3.node()) return;
+
       var scrollTop = selectionNodeD3.property("offsetTop") - contentNodeD3.property("offsetTop");
       contentNodeD3.property("scrollTop", scrollTop);
       selectText(selectionNodeD3.node());
@@ -165,7 +192,7 @@
     chartBox    = document.getElementById('chartBox');
     svgD3       = d3.select(chartBox).append("svg").attr("class", "chartGroup");
     brushG      = svgD3.append("g").attr("class", "brush");
-    drawingG    = svgD3.append("g").attr("class", "drawing").attr("clip-path", "url('#clipDrawing')");
+    drawingG    = svgD3.append("g").attr("class", "drawing").attr("clip-path", clipPath);
     marksG      = svgD3.append("g").attr("class", "markings");
 
     book1Bars   = drawingG.append("g").attr("id", "firstchart");
@@ -202,7 +229,7 @@
 
     // - Clip Path (Masking) ::
     clipRect = svgD3.append("defs").append("clipPath")
-        .attr("id", "clipDrawing")
+        .attr("id", clipPathId)
         .append("rect");
 
   }
@@ -252,7 +279,7 @@
     drawingG.selectAll(".dotted-bar-lines")
         .data(hoverLines)
         .enter().insert("line", ":first-child")
-        .attr("clip-path", "url('#clipDrawing')")
+        .attr("clip-path", clipPath)
         .attr("class", "dotted-bar-lines")
         .attr("opacity", 0);
 
@@ -298,7 +325,7 @@
     marksG.selectAll(".max-reference-lines")
         .data(refLinesData)
         .enter().append("line")
-        .attr("clip-path", "url('#clipDrawing')")
+        .attr("clip-path", clipPath)
         .attr("class", "max-reference-lines");
   }
   function updateChart(duration){
@@ -481,7 +508,8 @@
   function selectLineOnClicked(d1){
     if(d1===selectedLine) return;
     openPanel();
-    setPanelContent(d1);
+    setPanelContent("book1", d1);
+    setPanelContent("book2", d1);
 
     selectedLine && clearSelectedLine();
     selectedLine = d1;
@@ -572,8 +600,6 @@
       selection.addRange( range );
     }
   }
-
-
   //end panel
 
   function mapData(d) {
@@ -586,8 +612,8 @@
       book1_y2    : +d.column12,
       book2_y1    : +d.column13,
       book2_y2    : +d.column14,
-      book1_content: d.column15,
-      book2_content: d.column16
+      book1_content: deNormalize(d.column15),
+      book2_content: deNormalize(d.column16)
     };
   }
   function maxValues(){
