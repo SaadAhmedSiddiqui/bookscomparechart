@@ -26,7 +26,7 @@
   };
   var clipPathId = "clipDrawing";
   var clipPath = "url('#clipDrawing')";
-  window.books = books;
+  //window.books = books;
 
   marked.setOptions({
     renderer: new marked.Renderer(),
@@ -75,8 +75,7 @@
 
   d3.tsv("data-live.txt", mapData, function (error, data) {
     chartData = data;
-    console.log(data[3]);
-    window.itemText = data[3];
+    //window.itemText = data[3];
     drawChart();
     updateChart();
   });
@@ -107,7 +106,7 @@
       setTimeout(function () {
         var contentNodeD3 = d3.select(context.nodeId).style("display", null);
         d3.select("#"+bookName+"Loader").style("display", "none");
-        context.selector ? context.selector(context.text) : contentNodeD3.html(text);
+        context.selector ? context.selector() : contentNodeD3.html(text);
       }, 0);
     });
   }
@@ -127,7 +126,8 @@
     var taMarbutasRepl  = '[هة]';
     // -------------------------------------
     var hamzas      = '[ؤئء]';
-    var hamzasRepl  = '[ؤئءوي]';
+    //var hamzasRepl  = '[ؤئءوي]';
+    var hamzasRepl  = '[يى]?[ؤئءوي]';
     // -------------------------------------
 
     // Applying deNormalization ::
@@ -137,12 +137,14 @@
     text = text.replace(new RegExp(hamzas, 'g'), hamzasRepl);
     // -------------------------------------
 
-    text = text.replace(/ /g, "[\\s\\w\\#\\n\\@\\$\\|\\(\\)]+");
+    //text = text.replace(/ /g, "[\\s\\w\\#\\n\\@\\$\\|\\(\\)-]+");
+    //text = text.replace(/ /g, "((\\W+(\\d+)?)?(Page\\w+)?)+");       // new from max
+    text = text.replace(/ /g, "(\\W+(\\d+)?)?(note\\w+|Page\\w+)?");  // old from max
     // -------------------------------------
 
     return new RegExp(text);
   }
-  window.deNormalize = deNormalize;
+  //window.deNormalize = deNormalize;
   function filterNoise(text){
     text = text.replace(/\n~~/g, " ");
     text = text.replace(/  +/g, " ");
@@ -159,20 +161,26 @@
     //var t = "وبناء هذا الكتاب على ذكر أشياء مضافة ومنسوبة إلى أشياء
 
     var context = books[bookName];
-    var contentTxt = d1[bookName+"_content"];
+    d3.select(bookName+'RawContent').text(null);
     if(context.loading){
-      context.selector = selectPara.bind(null, context.nodeId, contentTxt);
+      context.selector = selectPara.bind(null, bookName, d1);
     } else{
-      selectPara(context.nodeId, contentTxt, context.text);
+      selectPara(bookName, d1);
     }
   }
-  function selectPara(contentNodeSelector, itemText, content){
-    var contentNodeD3 = d3.select(contentNodeSelector);
+  function selectPara(bookName, itemData){
+    var context = books[bookName];
+    var itemText = itemData[bookName+"_content"];
+    var contentNodeD3 = d3.select(context.nodeId);
+    var content = context.text;
     content = content.replace(itemText, '<selection>$&</selection>');
     contentNodeD3.html( parse(content) );
     setTimeout(function(){
       var selectionNodeD3 = contentNodeD3.select('selection');
-      if(!selectionNodeD3.node()) return;
+      if(!selectionNodeD3.node()) {
+        var rawContent = bookName+" not matched:</br></br>"+itemData[bookName+"_raw_content"];
+        return d3.select('#'+bookName+'RawContent').html(rawContent);
+      }
 
       var scrollTop = selectionNodeD3.property("offsetTop") - contentNodeD3.property("offsetTop");
       contentNodeD3.property("scrollTop", scrollTop);
@@ -508,8 +516,13 @@
   function selectLineOnClicked(d1){
     if(d1===selectedLine) return;
     openPanel();
-    setPanelContent("book1", d1);
-    setPanelContent("book2", d1);
+
+    setTimeout(function(){
+      setPanelContent("book1", d1);
+    }, 0);
+    setTimeout(function(){
+      setPanelContent("book2", d1);
+    }, 0);
 
     selectedLine && clearSelectedLine();
     selectedLine = d1;
@@ -603,7 +616,6 @@
   //end panel
 
   function mapData(d) {
-    // d.column16 = +d.column16;
 
     return {
       book1_page  : +d.column9,
@@ -613,7 +625,9 @@
       book2_y1    : +d.column13,
       book2_y2    : +d.column14,
       book1_content: deNormalize(d.column15),
-      book2_content: deNormalize(d.column16)
+      book2_content: deNormalize(d.column16),
+      book1_raw_content: d.column15,
+      book2_raw_content: d.column16
     };
   }
   function maxValues(){

@@ -62,17 +62,17 @@ div.tooltip {
 /*--Books View Bottom Panel -- [START]--*/
 .bottom-panel {
   height: 400px;
-  background-color: #111;
+  /*background-color: #111;*/
   overflow: hidden;
   transition: 0.5s;
   margin-bottom: 20px;
 }
-.bottom-panel .book-content {
+.book-content {
   padding: 0 8px;
   transition: 0.3s;
   width: calc(50% - 20px);
   height: calc(100% - 50px);
-  color: #afafaf;
+  /*color: #afafaf;*/
   font-size: 14px;
   display: inline-block;
   overflow-y: auto;
@@ -119,4 +119,8 @@ h5{
 }
 h6{
   color: blue;
+}
+
+selection{
+  background-color: yellow;
 }
