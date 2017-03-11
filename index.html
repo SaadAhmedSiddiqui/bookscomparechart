@@ -6,8 +6,8 @@
 	<title>KITAB - D3 Visualisation</title>
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<link rel="stylesheet" type="text/css" href="loader.css">
-	<script src="jquery.js"></script>
 	<script type="text/javascript" src="d3.v4.js"></script>
+	<script src="graph_helper.js"></script>
 	<script type="text/javascript" src="marked.js"></script>
 </head>
 
@@ -15,6 +15,11 @@
 
 <div id="main">
 	<div id="chartBox" class="chart-box"></div>
+</div>
+
+<div id="bottomPanelRaw" style="display: none;">
+	<div id="book1RawContent" class="book-content"></div>
+	<div id="book2RawContent" class="book-content"></div>
 </div>
 
 <!--Books View Bottom Panel -- [START]-->
@@ -53,11 +58,6 @@
 
 </div>
 <!--Books View Bottom Panel -- [END]-->
-
-<div>
-	<div id="book1RawContent" class="book-content"></div>
-	<div id="book2RawContent" class="book-content"></div>
-</div>
 
 <script type="text/javascript" src="script.js"></script>
 
