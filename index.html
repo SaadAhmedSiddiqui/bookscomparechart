@@ -7,60 +7,70 @@
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<link rel="stylesheet" type="text/css" href="loader.css">
 	<script type="text/javascript" src="d3.v4.js"></script>
+	<script src="utils.js"></script>
+	<script src="config.js"></script>
+	<script src="data-loader.js"></script>
 	<script src="graph_helper.js"></script>
 	<script type="text/javascript" src="marked.js"></script>
 </head>
 
 <body>
 
-<div id="main">
-	<div id="chartBox" class="chart-box"></div>
-</div>
-
-<div id="bottomPanelRaw" style="display: none;">
-	<div id="book1RawContent" class="book-content"></div>
-	<div id="book2RawContent" class="book-content"></div>
-</div>
-
-<!--Books View Bottom Panel -- [START]-->
-<div id="mySidenav" class="bottom-panel" style="opacity: 0; display: none">
-	<a id="closeBtn" href="javascript:void(0)" class="closebtn">&times;</a>
-	<div id="book1Content" class="book-content" style="display: none"></div>
-	<!--Book1 Loader -- [START]-->
-	<div id="book1Loader" class="book-content">
-		<div id="fountainG" style="top: 40%">
-			<div id="fountainG_1" class="fountainG"></div>
-			<div id="fountainG_2" class="fountainG"></div>
-			<div id="fountainG_3" class="fountainG"></div>
-			<div id="fountainG_4" class="fountainG"></div>
-			<div id="fountainG_5" class="fountainG"></div>
-			<div id="fountainG_6" class="fountainG"></div>
-			<div id="fountainG_7" class="fountainG"></div>
-			<div id="fountainG_8" class="fountainG"></div>
-		</div>
+	<div id="book-details"></div>
+	<div id="main">
+		<div id="chartBox" class="chart-box"></div>
 	</div>
-	<!--Book1 Loader -- [END]-->
-	<div id="book2Content" class="book-content" style="display: none"></div>
-	<!--Book2 Loader -- [START]-->
-	<div id="book2Loader" class="book-content">
-		<div id="fountainG" style="top: 40%">
-			<div id="fountainG_1" class="fountainG"></div>
-			<div id="fountainG_2" class="fountainG"></div>
-			<div id="fountainG_3" class="fountainG"></div>
-			<div id="fountainG_4" class="fountainG"></div>
-			<div id="fountainG_5" class="fountainG"></div>
-			<div id="fountainG_6" class="fountainG"></div>
-			<div id="fountainG_7" class="fountainG"></div>
-			<div id="fountainG_8" class="fountainG"></div>
-		</div>
+
+	<div id="bottomPanelRaw" style="display: none;">
+		<div id="book1RawContent" class="book-content"></div>
+		<div id="book2RawContent" class="book-content"></div>
 	</div>
-	<!--Book2 Loader -- [END]-->
 
-</div>
-<!--Books View Bottom Panel -- [END]-->
+	<!--Books View Bottom Panel [START]-->
+	<div id="mySidenav" class="bottom-panel" style="opacity: 0; display: none">
+		<a id="closeBtn" href="javascript:void(0)" class="closebtn">&times;</a>
+		<div id="book1Content" class="book-content" style="display: none"></div>
+		<!--Book1 Loader [START]-->
+		<div id="book1Loader" class="book-content">
+			<div id="fountainG" style="top: 40%">
+				<div id="fountainG_1" class="fountainG"></div>
+				<div id="fountainG_2" class="fountainG"></div>
+				<div id="fountainG_3" class="fountainG"></div>
+				<div id="fountainG_4" class="fountainG"></div>
+				<div id="fountainG_5" class="fountainG"></div>
+				<div id="fountainG_6" class="fountainG"></div>
+				<div id="fountainG_7" class="fountainG"></div>
+				<div id="fountainG_8" class="fountainG"></div>
+			</div>
+		</div>
+		<!--Book1 Loader [END]-->
+		<div id="book2Content" class="book-content" style="display: none"></div>
+		<!--Book2 Loader [START]-->
+		<div id="book2Loader" class="book-content">
+			<div id="fountainG" style="top: 40%">
+				<div id="fountainG_1" class="fountainG"></div>
+				<div id="fountainG_2" class="fountainG"></div>
+				<div id="fountainG_3" class="fountainG"></div>
+				<div id="fountainG_4" class="fountainG"></div>
+				<div id="fountainG_5" class="fountainG"></div>
+				<div id="fountainG_6" class="fountainG"></div>
+				<div id="fountainG_7" class="fountainG"></div>
+				<div id="fountainG_8" class="fountainG"></div>
+			</div>
+		</div>
+		<!--Book2 Loader [END]-->
 
-<script type="text/javascript" src="script.js"></script>
+	</div>
+	<!--Books View Bottom Panel [END]-->
 
+	<script type="text/javascript" src="script.js"></script>
+
+	<script>
+		renderVisual('Shamela0035100_JK006838.srt', {
+			book1_id: 'Shamela0035100',
+			book2_id: 'JK006838'
+		});
+	</script>
 </body>
 
 </html>
