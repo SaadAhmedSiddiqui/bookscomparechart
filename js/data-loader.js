@@ -1,7 +1,7 @@
 (function (exports) {
   'use strict';
 
-  var myWorker = new Worker('web-worker/data-worker.js');
+  var myWorker = new Worker(config.web_worker_path);
   myWorker.onmessage = workerMessage;
 
   var selectedMatchData;
@@ -77,8 +77,8 @@
     setTimeout(function () {
       var contentNodeD3 = d3.select('#' + bookName + 'Content');
       var selectionNodeD3 = contentNodeD3.select('selection');
-      var rawContent = '<div class="booktitle">' + bookName + '</div>'
-        + '<div>ms' + selectedMatchData[bookName + '_chunk'] + '</div>'
+      var rawContent = '<div class="booktitle">' + bookName
+        + ' (ms' + selectedMatchData[bookName + '_chunk'] + ')</div>'
         + selectedMatchData[bookName + '_raw_content'];
       d3.select('#' + bookName + 'RawContent').html(rawContent);
       if (!selectionNodeD3.node()) {

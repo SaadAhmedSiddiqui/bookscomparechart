@@ -15,7 +15,7 @@ onmessage = function (e) {
         text: [],
         dispatching: 0,
         start_chunk: chunkNumber - config.backward_chunk_count,
-        end_chunk: chunkNumber - config.forward_chunk_count
+        end_chunk: chunkNumber + config.forward_chunk_count
       };
       var startingPage = calcPageNumber(bookData.start_chunk, config.page_chunk_count);
       var endingPage = calcPageNumber(bookData.end_chunk, config.page_chunk_count);
@@ -95,7 +95,7 @@ function parseText(pageStr, bookName) {
     if (row) {
       row = row.split('\t');
       var chunkNumber = Number(row[0].replace('ms', ''));
-      if (chunkNumber >= bookData.start_chunk && chunkNumber >= bookData.end_chunk) {
+      if (chunkNumber >= bookData.start_chunk && chunkNumber <= bookData.end_chunk) {
         data[chunkNumber] = row[1];
       }
     }
