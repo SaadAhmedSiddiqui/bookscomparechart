@@ -3,7 +3,7 @@
     // book1: Top Bar Chart (x0)
     // book2: Bottom Bar Chart (x1)
     // connections: connect top bars with bottom bars
-    // y-axis: 0 to 100 for book1 and book2
+    // y-axis: 0 to config.chunk_size for book1 and book2
     // x-axis: decided by maxValues function which returns {book1, book2, peek}
     // vertical layout :: 60 + 60
 
@@ -89,8 +89,8 @@
 
         xScale = d3.scaleLinear();
         xScaleIdentity = d3.scaleLinear();
-        y0Scale = d3.scaleLinear().domain([0, 100]).range([barMaxHeight, 0]);
-        y1Scale = d3.scaleLinear().domain([0, 100]).range([0, barMaxHeight]);
+        y0Scale = d3.scaleLinear().domain([0, config.chunk_size]).range([barMaxHeight, 0]);
+        y1Scale = d3.scaleLinear().domain([0, config.chunk_size]).range([0, barMaxHeight]);
         y0Axis = d3.axisLeft(y0Scale).ticks(5);
         y1Axis = d3.axisLeft(y1Scale).ticks(5);
 
@@ -281,7 +281,7 @@
             .attr("x1", function (d) { return xScale(d.x); })
             .attr("x2", function (d) { return xScale(d.x); })
             .attr("y1", function (d) { return d.yScale(0) + d.y; })
-            .attr("y2", function (d) { return d.yScale(100) + d.y; });
+            .attr("y2", function (d) { return d.yScale(config.chunk_size) + d.y; });
 
         return t;
     }
@@ -370,7 +370,7 @@
             .attr("x1", function (d) { return xScale(d.x); })
             .attr("x2", function (d) { return xScale(d.x); })
             .attr("y1", function (d) { return d.yScale(0) + d.y; })
-            .attr("y2", function (d) { return d.yScale(100) + d.y; })
+            .attr("y2", function (d) { return d.yScale(config.chunk_size) + d.y; })
             .attr("opacity", null);
         showToolTip(d1);
     }

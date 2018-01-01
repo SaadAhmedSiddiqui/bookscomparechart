@@ -1,50 +1,102 @@
 (function (exports) {
   'use strict';
-  var books = {
-    book1: {
-      nodeId: '#book1Content',
-      text: null,
-      loading: false,
-      selector: null
-    },
-    book2: {
-      nodeId: '#book2Content',
-      text: null,
-      loading: false,
-      selector: null
-    }
-  };
 
-  exports.books = books;
-  exports.loadBook = loadBook;
+  var myWorker = new Worker('data-worker.js');
+  myWorker.onmessage = workerMessage;
+
+  var selectedMatchData;
+
+  exports.loadBooks = loadBooks;
   exports.parseMetaDataFile = parseMetaDataFile;
   exports.parseSrtFile = parseSrtFile;
 
-  function loadBook(bookName) {
-    var context = books[bookName];
+  function loadBooks(_selectedMatchData) {
+    selectedMatchData = _selectedMatchData;
 
-    context.loading = true;
-    d3.select('#' + bookName + 'Loader').style('display', null);
-    d3.text(context.url, function (error, text) {
-      if (error) throw error;
-      context.loading = false;
-
-      text = utils.filterBookNoise(text);
-      context.text = text;//.slice(35000,40000);
-      text = parseBookIntoHtml(text);
-      setTimeout(function () {
-        var contentNodeD3 = d3.select(context.nodeId).style('display', null);
-        d3.select('#' + bookName + 'Loader').style('display', 'none');
-        context.selector ? context.selector() : contentNodeD3.html(text);
-      }, 0);
+    config.bookSequence.forEach(function (bookName) {
+      d3.select('#' + bookName + 'Loader').style('display', null);
+      var contentNodeD3 = d3.select('#' + bookName + 'Content')
+      contentNodeD3.style('display', 'none');
+      contentNodeD3.html(null);
     });
+
+    var workerConfig = utils.pick([
+      'page_chunk_count', 'forward_chunk_count', 'backward_chunk_count',
+      'page_string_format', 'book_content_url', 'bookSequence'
+    ], {}, config)
+    var workerData = utils.pick([
+      'book1_id', 'book1_chunk', 'book2_id', 'book2_chunk'
+    ], {}, _selectedMatchData);
+    myWorker.postMessage(['load_book', workerData, workerConfig]);
+  }
+  function workerMessage(e) {
+    var taskName = e.data[0];
+    if (taskName === 'load_book') {
+      var status = e.data[1];
+      var textObj = e.data[2];
+      var bookName = e.data[3];
+      var selectedChunkId = selectedMatchData[bookName + '_chunk'];
+
+      for (var chunkId in textObj) {
+        var textToAppend = textObj[chunkId];
+        textToAppend = parseBookIntoHtml(textToAppend);
+        var contentNodeD3 = d3.select('#' + bookName + 'Content');
+
+        contentNodeD3
+          .append('div')
+          .attr('class', 'label-chunk')
+          .html('ms' + chunkId);
+
+        var currentPara = contentNodeD3
+          .append('div')
+          .html(textToAppend);
+        contentNodeD3.style('display', null);
+
+
+        if (Number(chunkId) === selectedChunkId) {
+          currentPara.attr('class', 'selection-chunk');
+          selectPara(bookName, currentPara, textToAppend);
+        }
+      }
+
+      if (status === 'complete') {
+        d3.select('#' + bookName + 'Loader').style('display', 'none');
+      }
+    }
+  }
+  function parseBookIntoHtml(text) {
+    text = marked(text);
+    return text;
+  }
+  function selectPara(bookName, currentPara, content) {
+    var itemText = selectedMatchData[bookName + '_content'];
+    d3.select(bookName + 'RawContent').text(null);
+    content = content.replace(itemText, '<selection>$&</selection>');
+    currentPara.html(parseBookIntoHtml(content));
+
+    setTimeout(function () {
+      var contentNodeD3 = d3.select('#' + bookName + 'Content');
+      var selectionNodeD3 = contentNodeD3.select('selection');
+      var rawContent = '<div class="booktitle">' + bookName + '</div>'
+        + '<div>ms'+selectedMatchData[bookName + '_chunk']+'</div>'
+          + selectedMatchData[bookName + '_raw_content'];
+      d3.select('#' + bookName + 'RawContent').html(rawContent);
+      if (!selectionNodeD3.node()) {
+        return;
+      }
+
+      var scrollTop = selectionNodeD3.property('offsetTop') - contentNodeD3.property('offsetTop');
+      contentNodeD3.property('scrollTop', scrollTop);
+      utils.selectText(selectionNodeD3.node());
+    }, 0);
   }
 
   function parseMetaDataFile(fileStr, bookUris) {
     var booksToFind = 2;
     var bookIdHash = {};
-    bookIdHash[bookUris.book1_id] = true;
-    bookIdHash[bookUris.book2_id] = true;
+    config.bookSequence.forEach(function (bookName) {
+      bookIdHash[bookUris[bookName]] = true;
+    });
 
     fileStr.split('\n').some(function (row) {
       if (row) {
@@ -58,10 +110,9 @@
       return booksToFind <= 0;
     });
 
-    return [
-      bookIdHash[bookUris.book1_id],
-      bookIdHash[bookUris.book2_id]
-    ];
+    return config.bookSequence.map(function (bookName) {
+      return bookIdHash[bookUris[bookName]];
+    });
   }
 
   function parseSrtFile(fileStr) {
@@ -70,17 +121,6 @@
       if (row) {
         row = row.split('\t');
         data.push(config.map_srt_data(row));
-      }
-    });
-    return data;
-  }
-
-  function parseTextFile(fileStr, mapper) {
-    var data = [];
-    fileStr.split('\n').forEach(function (row) {
-      if (row) {
-        row = row.split('\t');
-        data.push(mapper(row));
       }
     });
     return data;
