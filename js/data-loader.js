@@ -18,6 +18,7 @@
       var contentNodeD3 = d3.select('#' + bookName + 'Content')
       contentNodeD3.style('display', 'none');
       contentNodeD3.html(null);
+      d3.select(bookName + 'RawContent').text(null);
     });
 
     var workerConfig = utils.pick([
@@ -42,7 +43,7 @@
         textToAppend = parseBookIntoHtml(textToAppend);
         var contentNodeD3 = d3.select('#' + bookName + 'Content');
 
-        contentNodeD3
+        var paraLabel = contentNodeD3
           .append('div')
           .attr('class', 'label-chunk')
           .html('ms' + chunkId);
@@ -54,8 +55,14 @@
 
 
         if (Number(chunkId) === selectedChunkId) {
+          paraLabel.attr('class', 'selected-para-label')
           currentPara.attr('class', 'selection-chunk');
-          selectPara(bookName, currentPara, textToAppend);
+          selectPara(bookName, currentPara, textToAppend, paraLabel);
+
+          var rawContent = '<div class="booktitle">' + bookName
+            + ' (ms' + selectedMatchData[bookName + '_chunk'] + ')</div>'
+            + selectedMatchData[bookName + '_raw_content'];
+          d3.select('#' + bookName + 'RawContent').html(rawContent);
         }
       }
 
@@ -68,26 +75,24 @@
     text = marked(text);
     return text;
   }
-  function selectPara(bookName, currentPara, content) {
+  function selectPara(bookName, currentPara, content, paraLabel) {
     var itemText = selectedMatchData[bookName + '_content'];
-    d3.select(bookName + 'RawContent').text(null);
     content = content.replace(itemText, '<selection>$&</selection>');
     currentPara.html(parseBookIntoHtml(content));
 
     setTimeout(function () {
-      var contentNodeD3 = d3.select('#' + bookName + 'Content');
-      var selectionNodeD3 = contentNodeD3.select('selection');
-      var rawContent = '<div class="booktitle">' + bookName
-        + ' (ms' + selectedMatchData[bookName + '_chunk'] + ')</div>'
-        + selectedMatchData[bookName + '_raw_content'];
-      d3.select('#' + bookName + 'RawContent').html(rawContent);
-      if (!selectionNodeD3.node()) {
-        return;
-      }
+      paraLabel.node().scrollIntoView();
+      setTimeout(function () {
+        var contentNodeD3 = d3.select('#' + bookName + 'Content');
+        var selectionNodeD3 = contentNodeD3.select('selection');
+        if (!selectionNodeD3.node()) {
+          return;
+        }
 
-      var scrollTop = selectionNodeD3.property('offsetTop') - contentNodeD3.property('offsetTop');
-      contentNodeD3.property('scrollTop', scrollTop);
-      utils.selectText(selectionNodeD3.node());
+        var scrollTop = selectionNodeD3.property('offsetTop') - contentNodeD3.property('offsetTop');
+        contentNodeD3.property('scrollTop', scrollTop);
+        utils.selectText(selectionNodeD3.node());
+      }, 0);
     }, 0);
   }
 

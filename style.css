@@ -7,7 +7,6 @@ body {
   overflow: hidden;
 }
 
-
 .tick line {
   stroke: none;
   shape-rendering: crispEdges;
@@ -19,7 +18,7 @@ body {
   stroke: #FFCC66;
 }
 
-.connection{
+.connection {
   fill: none;
 }
 
@@ -33,15 +32,16 @@ body {
   fill-opacity: .165;
 }
 
-.brush .overlay{
+.brush .overlay {
   cursor: auto !important;
 }
 
-.max-reference-lines{
+.max-reference-lines {
   stroke-width: 5;
   stroke: black;
 }
-.dotted-bar-lines{
+
+.dotted-bar-lines {
   stroke-dasharray: 3 6;
   stroke: red;
 }
@@ -59,7 +59,9 @@ div.tooltip {
   margin-left: 6px;
 }
 
+
 /*--Books View Bottom Panel -- [START]--*/
+
 .bottom-panel {
   height: 400px;
   /*background-color: #111;*/
@@ -67,6 +69,7 @@ div.tooltip {
   transition: 0.5s;
   margin-bottom: 20px;
 }
+
 .book-content {
   padding: 0 8px;
   transition: 0.3s;
@@ -77,6 +80,7 @@ div.tooltip {
   display: inline-block;
   overflow-y: auto;
 }
+
 .bottom-panel .closebtn {
   color: #818181;
   font-size: 36px;
@@ -87,40 +91,60 @@ div.tooltip {
   transition: 0.3s;
   text-align: right;
 }
-.bottom-panel a.closebtn:hover{
+
+.bottom-panel a.closebtn:hover {
   color: #f1f1f1;
 }
+
+
 /*#main {
   transition: margin-left 0.5s;
   padding: 10px;
 }*/
+
 @media screen and (max-height: 450px) {
-  .bottom-panel .book-content {font-size: 12px;}
+  .bottom-panel .book-content {
+    font-size: 12px;
+  }
 }
+
+
 /*--Books View Bottom Panel -- [END]--*/
 
-h1{
+h1 {
   font-size: 24px !important;
 }
-h2, h3, h4, h5, h6{       /*header-level: 1 to 5*/
+
+h2,
+h3,
+h4,
+h5,
+h6 {
+  /*header-level: 1 to 5*/
   font-size: 28px !important;
 }
-h2{
+
+h2 {
   color: red;
 }
-h3{
+
+h3 {
   color: orange;
 }
-h4{
+
+h4 {
   color: yellow;
 }
-h5{
+
+h5 {
   color: green;
 }
-h6{
+
+h6 {
   color: blue;
 }
 
-selection{
+selection,
+.selected-para-label {
   background-color: yellow;
 }

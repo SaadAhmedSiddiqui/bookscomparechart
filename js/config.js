@@ -2,8 +2,8 @@
   'use strict';
 
   exports.bookSequence = ['book1', 'book2'];
-  exports.srt_data_path = '/D3 Book Match/data-file/{file_name}';
-  exports.meta_data_path = '/D3 Book Match/data-file/metadata.txt';
+  exports.srt_data_path = 'data-file/{file_name}';
+  exports.meta_data_path = 'data-file/metadata.txt';
   exports.web_worker_path = 'web-worker/data-worker.js';
   exports.book_content_url = 'https://raw.githubusercontent.com/OpenITI/i.mech/master/data/{book_id}-ara1-{page_string}';
   exports.book_github_url = 'https://raw.githubusercontent.com/OpenITI/i.mech/master/data/{book_id}-ara1';
