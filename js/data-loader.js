@@ -1,75 +1,116 @@
 (function (exports) {
   'use strict';
 
+  var workerConfig = utils.pick([
+    'page_chunk_count', 'forward_chunk_count', 'backward_chunk_count',
+    'page_string_format', 'book_content_url', 'bookSequence'
+  ], {}, config);
   var myWorker = new Worker(config.web_worker_path);
   myWorker.onmessage = workerMessage;
 
-  var selectedMatchData;
+  var selectedMatchData, loadedChunkRange = {};
 
+  exports.loadBackwardContent = loadBackwardContent;
+  exports.loadForwardContent = loadForwardContent;
   exports.loadBooks = loadBooks;
   exports.parseMetaDataFile = parseMetaDataFile;
   exports.parseSrtFile = parseSrtFile;
+
+  function pickWorkerData() {
+    return utils.pick([
+      'book1_id', 'book1_chunk', 'book2_id', 'book2_chunk'
+    ], {}, selectedMatchData);
+  }
+  function loadBackwardContent(bookName) {
+    var workerArgs = {
+      bookName: bookName,
+      start_chunk: loadedChunkRange[bookName][0] - config.load_more_count,
+      end_chunk: loadedChunkRange[bookName][0] - 1,
+    };
+
+    var workerData = pickWorkerData();
+    myWorker.postMessage(['load_backward_book', workerData, workerConfig, workerArgs]);
+  }
+  function loadForwardContent(bookName) {
+    var workerArgs = {
+      bookName: bookName,
+      start_chunk: loadedChunkRange[bookName][1] + 1,
+      end_chunk: loadedChunkRange[bookName][1] + config.load_more_count,
+    };
+
+    var workerData = pickWorkerData();
+    myWorker.postMessage(['load_forward_book', workerData, workerConfig, workerArgs]);
+  }
 
   function loadBooks(_selectedMatchData) {
     selectedMatchData = _selectedMatchData;
 
     config.bookSequence.forEach(function (bookName) {
       d3.select('#' + bookName + 'Loader').style('display', null);
-      var contentNodeD3 = d3.select('#' + bookName + 'Content')
-      contentNodeD3.style('display', 'none');
-      contentNodeD3.html(null);
+      d3.select('#' + bookName + 'Content').style('display', 'none');
+      d3.selectAll('.' + bookName + '.loader-btn').style('display', 'none');
+      d3.select('#' + bookName + 'Content').html(null);
       d3.select(bookName + 'RawContent').text(null);
     });
 
-    var workerConfig = utils.pick([
-      'page_chunk_count', 'forward_chunk_count', 'backward_chunk_count',
-      'page_string_format', 'book_content_url', 'bookSequence'
-    ], {}, config)
-    var workerData = utils.pick([
-      'book1_id', 'book1_chunk', 'book2_id', 'book2_chunk'
-    ], {}, _selectedMatchData);
-    myWorker.postMessage(['load_book', workerData, workerConfig]);
+    var workerData = pickWorkerData();
+    myWorker.postMessage(['load_new_book', workerData, workerConfig]);
   }
   function workerMessage(e) {
     var taskName = e.data[0];
-    if (taskName === 'load_book') {
-      var status = e.data[1];
-      var textObj = e.data[2];
-      var bookName = e.data[3];
-      var selectedChunkId = selectedMatchData[bookName + '_chunk'];
+    var status = e.data[1];
+    var textObj = e.data[2];
+    var bookName = e.data[3];
+    var selectedChunkId = selectedMatchData[bookName + '_chunk'];
+    var contentNodeD3 = d3.select('#' + bookName + 'Content');
+    var prependReferenceD3;
 
-      for (var chunkId in textObj) {
-        var textToAppend = textObj[chunkId];
-        textToAppend = parseBookIntoHtml(textToAppend);
-        var contentNodeD3 = d3.select('#' + bookName + 'Content');
+    if (taskName === 'load_new_book') {
+      loadedChunkRange[bookName] = e.data[4];
+    }
+    else if (taskName === 'load_backward_book') {
+      loadedChunkRange[bookName][0] = e.data[4][0];
+      prependReferenceD3 = contentNodeD3.select('div')
+        .attr('class', 'prepend-reference');
+    }
+    else if (taskName === 'load_forward_book') {
+      loadedChunkRange[bookName][1] = e.data[4][1];
+    }
 
-        var paraLabel = contentNodeD3
-          .append('div')
-          .attr('class', 'label-chunk')
-          .html('ms' + chunkId);
+    d3.select('#' + bookName + 'Content').style('display', null);
 
-        var currentPara = contentNodeD3
-          .append('div')
-          .html(textToAppend);
-        contentNodeD3.style('display', null);
+    for (var chunkId in textObj) {
+      var chunkText = textObj[chunkId];
+      chunkText = parseBookIntoHtml(chunkText);
 
-
-        if (Number(chunkId) === selectedChunkId) {
-          paraLabel.attr('class', 'selected-para-label')
-          currentPara.attr('class', 'selection-chunk');
-          selectPara(bookName, currentPara, textToAppend, paraLabel);
-
-          var rawContent = '<div class="booktitle">' + bookName
-            + ' (ms' + selectedMatchData[bookName + '_chunk'] + ')</div>'
-            + selectedMatchData[bookName + '_raw_content'];
-          d3.select('#' + bookName + 'RawContent').html(rawContent);
-        }
+      var paraLabel;
+      var currentPara;
+      if (prependReferenceD3) {
+        paraLabel = contentNodeD3.insert('div', 'div.prepend-reference');
+        currentPara = contentNodeD3.insert('div', 'div.prepend-reference');
+      } else {
+        paraLabel = contentNodeD3.append('div');
+        currentPara = contentNodeD3.append('div');
       }
 
-      if (status === 'complete') {
-        d3.select('#' + bookName + 'Loader').style('display', 'none');
+      paraLabel.attr('class', 'label-chunk')
+        .html('ms' + chunkId);
+      currentPara.html(chunkText);;
+
+      chunkId = Number(chunkId);
+      if (chunkId === selectedChunkId) {
+        selectPara(bookName, currentPara, chunkText, paraLabel);
       }
     }
+    if (prependReferenceD3) {
+      prependReferenceD3.attr('class', null);
+    }
+
+    if (status === 'complete') {
+      d3.select('#' + bookName + 'Loader').style('display', 'none');
+      d3.selectAll('.' + bookName + '.loader-btn').style('display', null);
+    }
+
   }
   function parseBookIntoHtml(text) {
     text = marked(text);
@@ -77,8 +118,17 @@
   }
   function selectPara(bookName, currentPara, content, paraLabel) {
     var itemText = selectedMatchData[bookName + '_content'];
+
+    paraLabel.attr('class', 'selected-para-label')
+    currentPara.attr('class', 'selection-chunk');
+
     content = content.replace(itemText, '<selection>$&</selection>');
     currentPara.html(parseBookIntoHtml(content));
+
+    var rawContent = '<div class="booktitle">' + bookName
+      + ' (ms' + selectedMatchData[bookName + '_chunk'] + ')</div>'
+      + selectedMatchData[bookName + '_raw_content'];
+    d3.select('#' + bookName + 'RawContent').html(rawContent);
 
     setTimeout(function () {
       paraLabel.node().scrollIntoView();

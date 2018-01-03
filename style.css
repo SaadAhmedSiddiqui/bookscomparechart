@@ -62,8 +62,12 @@ div.tooltip {
 
 /*--Books View Bottom Panel -- [START]--*/
 
+#bottomPanelRaw {
+  margin-top: 10px;
+}
+
 .bottom-panel {
-  height: 400px;
+  height: 430px;
   /*background-color: #111;*/
   overflow: hidden;
   transition: 0.5s;
@@ -74,26 +78,27 @@ div.tooltip {
   padding: 0 8px;
   transition: 0.3s;
   width: calc(50% - 20px);
-  height: calc(100% - 50px);
+  height: calc(100% - 94px);
   /*color: #afafaf;*/
   font-size: 14px;
   display: inline-block;
   overflow-y: auto;
+  vertical-align: top;
 }
 
 .bottom-panel .closebtn {
   color: #818181;
   font-size: 36px;
-  margin-right: 12px;
   padding: 2px 5px;
   text-decoration: none;
   display: block;
   transition: 0.3s;
   text-align: right;
+  margin-bottom: -48px;
 }
 
 .bottom-panel a.closebtn:hover {
-  color: #f1f1f1;
+  color: #e0e0e0;
 }
 
 
@@ -147,4 +152,26 @@ h6 {
 selection,
 .selected-para-label {
   background-color: yellow;
+}
+
+.loader-btn-wrapper {
+  margin: 10px 0 10px;
+  width: calc(50% - 2px);
+  display: inline-block;
+}
+
+.loader-btn {
+  width: 30%;
+  border-radius: 2px;
+  margin: 0 auto;
+  padding: 10px 0;
+  display: block;
+  background: #219150;
+  color: #fff;
+  cursor: pointer;
+  text-align: center;
+}
+
+.loader-btn:hover {
+  background: green;
 }

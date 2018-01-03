@@ -9,8 +9,9 @@
   exports.book_github_url = 'https://raw.githubusercontent.com/OpenITI/i.mech/master/data/{book_id}-ara1';
   exports.page_string_format = '00000';
   exports.chunk_size = 300;
-  exports.forward_chunk_count = 2;
-  exports.backward_chunk_count = 3;
+  exports.forward_chunk_count = 1;
+  exports.backward_chunk_count = 1;
+  exports.load_more_count = 2;
   exports.page_chunk_count = 200;
 
   exports.get_meta_data_book_id = function (d) {

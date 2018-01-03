@@ -29,7 +29,15 @@
 	<!--Books View Bottom Panel [START]-->
 	<div id="mySidenav" class="bottom-panel" style="opacity: 0; display: none">
 		<a id="closeBtn" href="javascript:void(0)" class="closebtn">&times;</a>
-		<div id="book1Content" class="book-content" style="display: none"></div>
+
+		<div class="loader-btn-wrapper">
+			<label id="book1StartBtn" class="loader-btn book1">LOAD MORE</label>
+		</div>
+		<div class="loader-btn-wrapper">
+			<label id="book2StartBtn" class="loader-btn book2">LOAD MORE</label>
+		</div>
+
+		<div id="book1Content" class="book-content"></div>
 		<!--Book1 Loader [START]-->
 		<div id="book1Loader" class="book-content">
 			<div id="fountainG" style="top: 40%">
@@ -44,7 +52,8 @@
 			</div>
 		</div>
 		<!--Book1 Loader [END]-->
-		<div id="book2Content" class="book-content" style="display: none"></div>
+
+		<div id="book2Content" class="book-content"></div>
 		<!--Book2 Loader [START]-->
 		<div id="book2Loader" class="book-content">
 			<div id="fountainG" style="top: 40%">
@@ -59,6 +68,13 @@
 			</div>
 		</div>
 		<!--Book2 Loader [END]-->
+
+		<div class="loader-btn-wrapper">
+			<label id="book1EndBtn" class="loader-btn book1">LOAD MORE</label>
+		</div>
+		<div class="loader-btn-wrapper">
+			<label id="book2EndBtn" class="loader-btn book2">LOAD MORE</label>
+		</div>
 
 	</div>
 	<!--Books View Bottom Panel [END]-->

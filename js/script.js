@@ -87,6 +87,10 @@
     function eventBindings() {
       d3.select('#closeBtn').on('click', closePanel);
       window.onresize = onResize;
+      config.bookSequence.forEach(bookName => {
+        d3.select('#' + bookName + 'StartBtn').on('click', dataLoader.loadBackwardContent.bind(null, bookName));
+        d3.select('#' + bookName + 'EndBtn').on('click', dataLoader.loadForwardContent.bind(null, bookName));
+      });
     }
 
     function onResize() {
