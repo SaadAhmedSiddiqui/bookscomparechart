@@ -1,17 +1,10 @@
 (function (exports) {
   'use strict';
 
-  exports.splitString = splitString;
   exports.pick = pick;
   exports.replaceParams = replaceParams;
-  exports.extractIdAndMs = extractIdAndMs;
-  exports.deNormalizeItemText = deNormalizeItemText;
   exports.selectText = selectText;
-
-  function splitString(stringToSplit, separator) {
-    var arrayOfStrings = stringToSplit.split(separator);
-    return arrayOfStrings[1];
-  }
+  exports.extractRow = extractRow;
 
   function pick(properties, targetObject, sourceObject) {
     sourceObject = sourceObject || targetObject;
@@ -87,5 +80,27 @@
       selection.addRange(range);
     }
   }
+
+  var typesForConversion = {
+    'number': function (output, value, schema) { output[schema.key] = Number(value); },
+    'string': function (output, value, schema) { output[schema.key] = value; },
+    'normalizedText': function (output, value, schema) { output[schema.key] = deNormalizeItemText(value); },
+    'extract': function (output, value, schema) {
+      var extracts = extractIdAndMs(value);
+      output[schema.key] = extracts[0];
+      output[schema.key2] = extracts[1];
+    },
+    'ceil': function (output, value, schema) { output[schema.key] = Math.ceil(value / schema.use); }
+  };
+
+  function extractRow(row, mapping) {
+
+    return mapping.reduce(function (output, schema) {
+      var process = typesForConversion[schema.type];
+      process(output, row[schema.cell], schema);
+      return output;
+    }, {});
+  }
+
 
 })(window.utils = {});

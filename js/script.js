@@ -3,6 +3,12 @@
 
   window.renderVisual = renderVisual;
   function renderVisual(srtFileName, bookUris) {
+    var workerConfig = utils.pick([
+      'bookSequence', 'meta_data_path', 'meta_data_mapping', 'meta_data_book_id_cell', 'srt_data_mapping'
+    ], {}, config);
+
+    var loadInitialDataWorker = new Worker(config.web_worker_path.load_inial_data);
+    loadInitialDataWorker.onmessage = onInitData;
 
     // book1: Top Bar Chart (x0)
     // book2: Bottom Bar Chart (x1)
@@ -33,56 +39,53 @@
 
     // use mapDataWithIndex function when there is no header
     // d3.tsv('data-live.txt', mapData, function (error, data) {
-    d3.queue()
-      .defer(d3.text, utils.replaceParams(config.srt_data_path, { 'file_name': srtFileName }))
-      .defer(d3.text, config.meta_data_path)
-      .await(function (error, srtDataText, metaDataText) {
-        if (!srtDataText && metaDataText) {
-          throw new Error('Data is undefined');
-        }
-        var selectedMetadata = dataLoader.parseMetaDataFile(metaDataText, bookUris);
-        graph.setMaxValue(selectedMetadata.map(function (d) {
-          return d.book_chunk_count;
-        }));
-
-        var srtData = dataLoader.parseSrtFile(srtDataText);
-        graph.initData(srtData);
-        graph.setLayout();
-
-        setTimeout(function () {
-          graph.drawChart();
-          graph.updateChart();
-        }, 500);
-
-        bookDetails = d3.select(bookDiv).append('g');
-        bookDetails.selectAll('.book-details')
-          .data(selectedMetadata)
-          .enter().append('div').attr('class', 'books-details')
-          .append('a').attr('class', 'a-width')
-          .attr('href', function (d) { return d.github_url; })
-          .text(function (d) { return 'Github Book URL: ' + utils.replaceParams(config.book_content_url, { 'book_id': d.book_id }); });
-
-        bookDetails.selectAll('div')
-          .append('p')
-          .text(function (d) { return 'Book Author: ' + d.book_author; });
-
-        bookDetails.selectAll('div')
-          .append('p')
-          .text(function (d) { return 'Word Count: ' + d.book_word_count; });
-
-        bookDetails.selectAll('div')
-          .append('p')
-          .text(function (d) { return 'Book Title: ' + d.book_title; });
-
-        bookDetails.selectAll('div')
-          .append('p')
-          .text(function (d) { return 'Book URI: ' + d.book_uri; });
-
-        eventBindings();
-      });
+    var srtDataUrl = utils.replaceParams(config.srt_data_path, { 'file_name': srtFileName });
+    loadInitialDataWorker.postMessage([srtDataUrl, bookUris, workerConfig]);
 
     graph.createChart();
     // graph.setLayout();
+
+    function onInitData(e) {
+      var srtData = e.data[0];
+      var selectedMetadata = e.data[1];
+      graph.setMaxValue(selectedMetadata.map(function (d) {
+        return d.book_chunk_count;
+      }));
+
+      graph.initData(srtData);
+      graph.setLayout();
+
+      setTimeout(function () {
+        graph.drawChart();
+        graph.updateChart();
+      }, 500);
+
+      bookDetails = d3.select(bookDiv).append('g');
+      bookDetails.selectAll('.book-details')
+        .data(selectedMetadata)
+        .enter().append('div').attr('class', 'books-details')
+        .append('a').attr('class', 'a-width')
+        .attr('href', function (d) { return d.github_url; })
+        .text(function (d) { return 'Github Book URL: ' + utils.replaceParams(config.book_github_url, { 'book_id': d.book_id }); });
+
+      bookDetails.selectAll('div')
+        .append('p')
+        .text(function (d) { return 'Book Author: ' + d.book_author; });
+
+      bookDetails.selectAll('div')
+        .append('p')
+        .text(function (d) { return 'Word Count: ' + d.book_word_count; });
+
+      bookDetails.selectAll('div')
+        .append('p')
+        .text(function (d) { return 'Book Title: ' + d.book_title; });
+
+      bookDetails.selectAll('div')
+        .append('p')
+        .text(function (d) { return 'Book URI: ' + d.book_uri; });
+
+      eventBindings();
+    };
 
     function eventBindings() {
       d3.select('#closeBtn').on('click', closePanel);

@@ -5,7 +5,7 @@
     'page_chunk_count', 'forward_chunk_count', 'backward_chunk_count',
     'page_string_format', 'book_content_url', 'bookSequence'
   ], {}, config);
-  var myWorker = new Worker(config.web_worker_path);
+  var myWorker = new Worker(config.web_worker_path.load_chunks);
   myWorker.onmessage = workerMessage;
 
   var selectedMatchData, loadedChunkRange = {};
@@ -13,8 +13,6 @@
   exports.loadBackwardContent = loadBackwardContent;
   exports.loadForwardContent = loadForwardContent;
   exports.loadBooks = loadBooks;
-  exports.parseMetaDataFile = parseMetaDataFile;
-  exports.parseSrtFile = parseSrtFile;
 
   function pickWorkerData() {
     return utils.pick([
@@ -146,40 +144,6 @@
     }, 0);
   }
 
-  function parseMetaDataFile(fileStr, bookUris) {
-    var booksToFind = 2;
-    var bookIdHash = {};
-    config.bookSequence.forEach(function (bookName) {
-      bookIdHash[bookUris[bookName]] = true;
-    });
-
-    fileStr.split('\n').some(function (row) {
-      if (row) {
-        row = row.split('\t');
-        var bookId = config.get_meta_data_book_id(row);
-        if (bookIdHash[bookId]) {
-          bookIdHash[bookId] = config.map_meta_data(row);
-          booksToFind--;
-        }
-      }
-      return booksToFind <= 0;
-    });
-
-    return config.bookSequence.map(function (bookName) {
-      return bookIdHash[bookUris[bookName]];
-    });
-  }
-
-  function parseSrtFile(fileStr) {
-    var data = [];
-    fileStr.split('\n').forEach(function (row) {
-      if (row) {
-        row = row.split('\t');
-        data.push(config.map_srt_data(row));
-      }
-    });
-    return data;
-  }
 
 
 })(window.dataLoader = {});

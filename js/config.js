@@ -4,7 +4,10 @@
   exports.bookSequence = ['book1', 'book2'];
   exports.srt_data_path = 'data-file/{file_name}';
   exports.meta_data_path = 'data-file/metadata.txt';
-  exports.web_worker_path = 'web-worker/data-worker.js';
+  exports.web_worker_path = {
+    load_chunks: 'web-worker/load-chunks-worker.js',
+    load_inial_data: 'web-worker/load-initial-data-worker.js'
+  };
   exports.book_content_url = 'https://raw.githubusercontent.com/OpenITI/i.mech/master/data/{book_id}-ara1-{page_string}';
   exports.book_github_url = 'https://raw.githubusercontent.com/OpenITI/i.mech/master/data/{book_id}-ara1';
   exports.page_string_format = '00000';
@@ -14,42 +17,32 @@
   exports.load_more_count = 2;
   exports.page_chunk_count = 200;
 
-  exports.get_meta_data_book_id = function (d) {
-    return d[0];
-  };
-  exports.map_meta_data = function (d) {
-    return {
-      book_id: d[0],
-      book_author: d[1],
-      // author_died: +d[2],
-      book_title: d[3],
-      book_word_count: Number(d[4]),
-      book_chunk_count: Math.ceil(d[4] / exports.chunk_size),
-      book_uri: d[5],
-      // book_cat: d[6],
-      // github_url: d[7]
-    };
-  };
 
-  exports.map_srt_data = function (d) {
-    var book1_ids = utils.extractIdAndMs(d[0]);
-    var book2_ids = utils.extractIdAndMs(d[6]);
+  exports.meta_data_mapping = [
+    { key: 'book1_id', cell: 0, type: 'string' },
+    { key: 'book_author', cell: 1, type: 'string' },
+    // { key: 'author_died', cell: 2, type: 'string' },
+    { key: 'book_title', cell: 3, type: 'string' },
+    { key: 'book_word_count', cell: 4, type: 'number' },
+    { key: 'book_chunk_count', cell: 4, type: 'ceil', use: exports.chunk_size },
+    { key: 'book_uri', cell: 5, type: 'string' },
+    // { key: 'book_cat', cell: 6, type: 'string' },
+    // { key: 'github_url', cell: 7, type: 'string' },
+  ];
+  exports.meta_data_book_id_cell = exports.meta_data_mapping[0].cell;
 
-    return {
-      book1_id: book1_ids[0],
-      book1_chunk: +book1_ids[1],
-      book1_y1: Number(d[2]),
-      book1_y2: Number(d[3]),
-      book1_raw_content: d[1],
-      book1_content: utils.deNormalizeItemText(d[1]),
+  exports.srt_data_mapping = [
+    { key: 'book1_id', key2: 'book1_chunk', cell: 0, type: 'extract' },
+    { key: 'book1_y1', cell: 2, type: 'number' },
+    { key: 'book1_y2', cell: 3, type: 'number' },
+    { key: 'book1_raw_content', cell: 1, type: 'string' },
+    { key: 'book1_content', cell: 1, type: 'normalizedText' },
 
-      book2_id: book2_ids[0],
-      book2_chunk: +book2_ids[1],
-      book2_y1: Number(d[8]),
-      book2_y2: Number(d[9]),
-      book2_raw_content: d[7],
-      book2_content: utils.deNormalizeItemText(d[7])
-    };
-  };
+    { key: 'book2_id', key2: 'book2_chunk', cell: 6, type: 'extract' },
+    { key: 'book2_y1', cell: 8, type: 'number' },
+    { key: 'book2_y2', cell: 9, type: 'number' },
+    { key: 'book2_raw_content', cell: 7, type: 'string' },
+    { key: 'book2_content', cell: 7, type: 'normalizedText' }
+  ];
 
 })(window.config = {});
