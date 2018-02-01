@@ -19,7 +19,7 @@
 
 
   exports.meta_data_mapping = [
-    { key: 'book1_id', cell: 0, type: 'string' },
+    { key: 'book_id', cell: 0, type: 'string' },
     { key: 'book_author', cell: 1, type: 'string' },
     // { key: 'author_died', cell: 2, type: 'string' },
     { key: 'book_title', cell: 3, type: 'string' },
