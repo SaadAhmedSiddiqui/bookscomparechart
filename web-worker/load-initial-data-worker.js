@@ -75,7 +75,7 @@ var typesForConversion = {
   'extract': function (output, value, schema) {
     var extracts = extractIdAndMs(value);
     output[schema.key] = extracts[0];
-    output[schema.key2] = extracts[1];
+    output[schema.key2] = Number(extracts[1]);
   },
   'ceil': function (output, value, schema) { output[schema.key] = Math.ceil(value / schema.use); }
 };

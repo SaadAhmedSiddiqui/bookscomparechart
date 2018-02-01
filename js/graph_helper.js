@@ -346,7 +346,7 @@
             .style("display", null);
 
         toolTipDiv.html(html)
-            .style("left", (d3.event.pageX) + "px")
+            .style("left", (d3.event.pageX + 10) + "px")
             .style("top", (d3.event.pageY - 28) + "px");
     }
     function hideToolTip() {
