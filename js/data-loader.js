@@ -9,6 +9,7 @@
   myWorker.onmessage = workerMessage;
 
   var selectedMatchData, loadedChunkRange = {};
+  var completedDataCount = 0;
 
   exports.loadBackwardContent = loadBackwardContent;
   exports.loadForwardContent = loadForwardContent;
@@ -41,6 +42,7 @@
   }
 
   function loadBooks(_selectedMatchData) {
+    completedDataCount = 0;
     selectedMatchData = _selectedMatchData;
 
     config.bookSequence.forEach(function (bookName) {
@@ -48,7 +50,7 @@
       d3.select('#' + bookName + 'Content').style('display', 'none');
       d3.selectAll('.' + bookName + '.loader-btn').style('display', 'none');
       d3.select('#' + bookName + 'Content').html(null);
-      d3.select(bookName + 'RawContent').text(null);
+      d3.select('#' + bookName + 'RawContent').text(null);
     });
 
     var workerData = pickWorkerData();
@@ -107,6 +109,10 @@
     if (status === 'complete') {
       d3.select('#' + bookName + 'Loader').style('display', 'none');
       d3.selectAll('.' + bookName + '.loader-btn').style('display', null);
+
+      if (++completedDataCount >= 2) {
+        markDashes();
+      }
     }
 
   }
@@ -123,11 +129,6 @@
     content = content.replace(itemText, '<selection>$&</selection>');
     currentPara.html(parseBookIntoHtml(content));
 
-    var rawContent = '<div class="booktitle">' + bookName
-      + ' (ms' + selectedMatchData[bookName + '_chunk'] + ')</div>'
-      + selectedMatchData[bookName + '_raw_content'];
-    d3.select('#' + bookName + 'RawContent').html(rawContent);
-
     setTimeout(function () {
       paraLabel.node().scrollIntoView();
       setTimeout(function () {
@@ -143,7 +144,20 @@
       }, 0);
     }, 0);
   }
+  function markDashes() {
+    console.log(selectedMatchData);
+    var rawContent = '<div class="booktitle">book1 (ms' + selectedMatchData['book1_chunk'] + ')</div>'
+      + selectedMatchData['book1_raw_content'].replace(/-+/g, function (match, index) {
+        return '<span class="difference-deletion">' + selectedMatchData['book2_raw_content'].slice(index, match.length) + '</span>';
+      });
+    d3.select('#book1RawContent').html(rawContent);
 
+    var rawContent = '<div class="booktitle">book2 (ms' + selectedMatchData['book2_chunk'] + ')</div>'
+      + selectedMatchData['book2_raw_content'].replace(/-+/g, function (match, index) {
+        return '<span class="difference-addition">' + selectedMatchData['book1_raw_content'].slice(index, match.length) + '</span>';
+      });
+    d3.select('#book2RawContent').html(rawContent);
+  }
 
 
 })(window.dataLoader = {});

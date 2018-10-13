@@ -59,7 +59,6 @@ div.tooltip {
   margin-left: 6px;
 }
 
-
 /*--Books View Bottom Panel -- [START]--*/
 
 #bottomPanelRaw {
@@ -87,6 +86,7 @@ div.tooltip {
 }
 
 .bottom-panel .closebtn {
+  position: relative;
   color: #818181;
   font-size: 36px;
   padding: 2px 5px;
@@ -101,7 +101,6 @@ div.tooltip {
   color: #e0e0e0;
 }
 
-
 /*#main {
   transition: margin-left 0.5s;
   padding: 10px;
@@ -112,7 +111,6 @@ div.tooltip {
     font-size: 12px;
   }
 }
-
 
 /*--Books View Bottom Panel -- [END]--*/
 
@@ -152,6 +150,15 @@ h6 {
 selection,
 .selected-para-label {
   background-color: yellow;
+}
+
+.difference-deletion {
+  background-color: #db4437;
+  color: white
+}
+
+.difference-addition {
+  background-color: #5cb85c;
 }
 
 .loader-btn-wrapper {
