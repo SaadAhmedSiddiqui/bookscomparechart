@@ -147,16 +147,65 @@
   function markDashes() {
     console.log(selectedMatchData);
     var rawContent = '<div class="booktitle">book1 (ms' + selectedMatchData['book1_chunk'] + ')</div>'
-      + selectedMatchData['book1_raw_content'].replace(/-+/g, function (match, index) {
-        return '<span class="difference-deletion">' + selectedMatchData['book2_raw_content'].slice(index, match.length) + '</span>';
-      });
+      + processColoring(selectedMatchData['book1_raw_content'], selectedMatchData['book2_raw_content'], 'difference-deletion')
+      + '<br/><br/>'
+      + selectedMatchData['book1_raw_content'];
     d3.select('#book1RawContent').html(rawContent);
 
     var rawContent = '<div class="booktitle">book2 (ms' + selectedMatchData['book2_chunk'] + ')</div>'
-      + selectedMatchData['book2_raw_content'].replace(/-+/g, function (match, index) {
-        return '<span class="difference-addition">' + selectedMatchData['book1_raw_content'].slice(index, match.length) + '</span>';
-      });
+      + processColoring(selectedMatchData['book2_raw_content'], selectedMatchData['book1_raw_content'], 'difference-addition')
+      + '<br/><br/>'
+      + selectedMatchData['book2_raw_content'];
     d3.select('#book2RawContent').html(rawContent);
+  }
+  function processColoring(text1, text2, colorClass) {
+    var output = '';
+    for (var globalIndex = 0; globalIndex < text1.length && globalIndex < text2.length; globalIndex++) {
+      if (text1[globalIndex] === text2[globalIndex]) {
+        text1Append(globalIndex);
+
+      } else if (compareOmission(globalIndex)) {
+        globalIndex = traverseExtension(globalIndex, 'difference-deletion', compareOmission, text1Append);
+
+      } else if (compareInsertion(globalIndex)) {
+        globalIndex = traverseExtension(globalIndex, 'difference-addition', compareInsertion, text1Append);
+
+      } else if (compareDifference(globalIndex)) {
+        globalIndex = traverseExtension(globalIndex, colorClass, compareDifference, text1Append);
+      }
+      /* if T1[x] == "-":
+        OMISSIONS += 1
+      if T2[x] == "-":
+        INSERTION += 1
+      if T1[x] != "-" and T2[x] != "-":
+      if T1[x] != T2[x]:
+        DIFF += 1 */
+    }
+    return output;
+    function compareOmission(j) {
+      return text1[j] === '-';
+    }
+    function compareInsertion(j) {
+      return text2[j] === '-';
+    }
+    function compareDifference(j) {
+      return text1[j] !== '-' && text2[j] !== '-' && text1[j] !== text1[j];
+    }
+    function text1Append(j) {
+      output += text1[j];
+    }
+    function text2Append(j) {
+      output += text1[j];
+    }
+    function traverseExtension(index, markerClass, compareFn, appendFn) {
+      output += '<span class="' + markerClass + '">';
+      appendFn(index++);
+      while (index < text1.length && compareFn(index)) {
+        appendFn(index++);
+      };
+      output += '</span>';
+      return --index;
+    }
   }
 
 
