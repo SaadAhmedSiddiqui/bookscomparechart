@@ -1,0 +1,24 @@
+.data-table {
+  border: 2px solid black;
+  width: 100%;
+  margin: 4px 0;
+  border-spacing: 0;
+}
+
+.data-table td {
+  border: 1px solid black;
+  padding: 8px;
+}
+
+.data-table td:nth-child(1) {
+  width: 100px;
+}
+
+.difference-deletion {
+  background-color: #db4437;
+  color: white
+}
+
+.difference-addition {
+  background-color: #5cb85c;
+}

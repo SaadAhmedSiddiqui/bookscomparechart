@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>KITAB - D3 Visualisation</title>
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+  <script type="text/javascript" src="js/FileSaver.js"></script>
+  <script type="text/javascript" src="../vendors/d3.v4.js"></script>
+  <script type="text/javascript" src="../js/process-coloring.js"></script>
+  <script type="text/javascript" src="js/script.js"></script>
+</head>
+
+<body>
+  <button onclick="exportCSV()">Export Back to CSV</button>
+  <button onclick="fileInput.click()">Import CSV</button>
+  <input id="fileInput" type="file" accept="text/csv" onchange="loadCSV(this)" hidden />
+  <table id="dataTable" class="data-table" hidden>
+    <tbody>
+      <tr id="rowTemplate" hidden>
+        <td class="questioner">
+          <select>
+            <option value="0">Empty</option>
+            <option value="1">Yes</option>
+            <option value="2">No</option>
+            <option value="3">Kind of</option>
+            <option value="4">Certainly Not</option>
+          </select>
+        </td>
+        <td>{{book1Name}}</td>
+        <td>{{book2Name}}</td>
+        <td>{{book1Content}}</td>
+        <td>{{book2Content}}</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+
+</html>
