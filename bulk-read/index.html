@@ -5,16 +5,17 @@
   <meta charset="utf-8">
   <title>KITAB - D3 Visualisation</title>
   <link rel="stylesheet" type="text/css" href="css/style.css">
-  <script type="text/javascript" src="js/FileSaver.js"></script>
+  <script type="text/javascript" src="../vendors/FileSaver.js"></script>
   <script type="text/javascript" src="../vendors/d3.v4.js"></script>
   <script type="text/javascript" src="../js/process-coloring.js"></script>
-  <script type="text/javascript" src="js/script.js"></script>
+  <script type="text/javascript" src="js/import-export.js"></script>
 </head>
 
 <body>
-  <button onclick="exportCSV()">Export Back to CSV</button>
+  <button onclick="window.exportCSV()">Export Back to CSV</button>
   <button onclick="fileInput.click()">Import CSV</button>
-  <input id="fileInput" type="file" accept="text/csv" onchange="loadCSV(this)" hidden />
+  <button onclick="window.toggleMarking()">Toggle Marking</button>
+  <input id="fileInput" type="file" accept="text/csv" onchange="window.loadCSV(this)" hidden />
   <table id="dataTable" class="data-table" hidden>
     <tbody>
       <tr id="rowTemplate" hidden>
