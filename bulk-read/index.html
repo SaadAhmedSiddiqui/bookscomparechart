@@ -5,6 +5,7 @@
   <meta charset="utf-8">
   <title>KITAB - D3 Visualisation</title>
   <link rel="stylesheet" type="text/css" href="css/style.css">
+  <link rel="stylesheet" type="text/css" href="../css/loader.css">
   <script type="text/javascript" src="../vendors/FileSaver.js"></script>
   <script type="text/javascript" src="../vendors/d3.v4.js"></script>
   <script type="text/javascript" src="../js/process-coloring.js"></script>
@@ -16,9 +17,11 @@
   <button onclick="fileInput.click()">Import CSV</button>
   <button onclick="window.toggleMarking()">Toggle Marking</button>
   <input id="fileInput" type="file" accept="text/csv" onchange="window.loadCSV(this)" hidden />
-  <table id="dataTable" class="data-table" hidden>
+  <table id="dataTable" class="data-table" style="display: none">
     <tbody>
       <tr id="rowTemplate" hidden>
+
+        <!-- ##2 START -->
         <td class="questioner">
           <select>
             <option value="0">Empty</option>
@@ -28,6 +31,8 @@
             <option value="4">Certainly Not</option>
           </select>
         </td>
+        <!-- ##2 END -->
+
         <td>{{book1Name}}</td>
         <td>{{book2Name}}</td>
         <td>{{book1Content}}</td>
@@ -35,6 +40,18 @@
       </tr>
     </tbody>
   </table>
+  <div id="bulkLoader" class="book-content" style="display: none; margin-top: 60px">
+    <div id="fountainG" style="top: 40%">
+      <div id="fountainG_1" class="fountainG"></div>
+      <div id="fountainG_2" class="fountainG"></div>
+      <div id="fountainG_3" class="fountainG"></div>
+      <div id="fountainG_4" class="fountainG"></div>
+      <div id="fountainG_5" class="fountainG"></div>
+      <div id="fountainG_6" class="fountainG"></div>
+      <div id="fountainG_7" class="fountainG"></div>
+      <div id="fountainG_8" class="fountainG"></div>
+    </div>
+  </div>
 </body>
 
 </html>

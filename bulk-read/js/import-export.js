@@ -1,3 +1,6 @@
+// to turn off skip header: remove line with comment id ##1 in this script
+// to remove drop down: remove lines and para with comment id ##2 in this script and index.html as well
+
 (function (window) {
   'use strict';
   window.loadCSV = loadCSV;
@@ -10,43 +13,64 @@
     var reader = new FileReader();
     reader.onloadend = function () {
       window.currentText = reader.result;
-      loadCurrentTextOnToDom();
+      d3.select('#bulkLoader').style('display', null);
+      d3.select('#dataTable').style('display', 'none');
+      setTimeout(function () {
+        loadCurrentTextOnToDom();
+        d3.select('#bulkLoader').style('display', 'none');
+      });
     }
     reader.readAsText(input.files[0], 'utf-8')
   }
   function toggleMarking() {
     window.isMarkingsOn = !window.isMarkingsOn;
-    loadCurrentTextOnToDom();
+    d3.select('#bulkLoader').style('display', null);
+    d3.select('#dataTable').style('display', 'none');
+    setTimeout(function () {
+      loadCurrentTextOnToDom();
+      d3.select('#bulkLoader').style('display', 'none');
+    });
   }
   function loadCurrentTextOnToDom() {
     // var inputRows = d3.csvParseRows(inputText);
-    var inputRows = d3.tsvParseRows(window.currentText);
     var dataTable = document.getElementById('dataTable');
     var tableBody = dataTable.querySelector('tbody');
-    dataTable.removeAttribute('hidden');
-
+    var inputRows = d3.tsvParseRows(window.currentText);
+    var col = {
+      name1: 0,
+      name2: 6,
+      content1: 1,
+      content2: 7
+    };
     d3.selectAll('#dataTable tr:not(#rowTemplate)').remove();
 
+    processRow(inputRows.shift(), false);    // ##1 line deals first row as header
+
     inputRows.forEach(function (dataRow) {
+      processRow(dataRow, window.isMarkingsOn);
+    });
+
+    d3.select('#dataTable').style('display', null);
+    function processRow(dataRow, isMarkingOn) {
       var nodeClone = document.getElementById('rowTemplate').cloneNode(true);
       nodeClone.removeAttribute('id');
       var params = {
-        book1Name: dataRow[0],
-        book2Name: dataRow[6]
+        book1Name: dataRow[col.name1],
+        book2Name: dataRow[col.name2]
       };
-      if (window.isMarkingsOn) {
-        params.book1Content = window.processColoring(dataRow[1], dataRow[7], 'difference-deletion');
-        params.book2Content = window.processColoring(dataRow[7], dataRow[1], 'difference-addition');
+      if (isMarkingOn) {
+        params.book1Content = window.processColoring(dataRow[col.content1], dataRow[col.content2], 'difference-deletion');
+        params.book2Content = window.processColoring(dataRow[col.content2], dataRow[col.content1], 'difference-addition');
       } else {
-        params.book1Content = dataRow[1];
-        params.book2Content = dataRow[7];
+        params.book1Content = dataRow[col.content1];
+        params.book2Content = dataRow[col.content2];
       }
       nodeClone.querySelectorAll('td').forEach(function (td) {
         td.innerHTML = replaceParams(td.innerHTML, params);
       });
       nodeClone.removeAttribute('hidden');
       tableBody.append(nodeClone);
-    });
+    }
   }
   function exportCSV() {
     if (document.getElementById('fileInput').files.length === 0) {
@@ -55,7 +79,8 @@
     var csvOutputArray = [];
     d3.selectAll('#dataTable tr:not(#rowTemplate)')
       .each(function () {
-        var outputRow = [this.querySelector('.questioner select').value];
+        var outputRow = [];
+        this.querySelector('.questioner select').value  // ##2 line drop down value
         d3.select(this).selectAll('td:not(.questioner)')
           .each(function () {
             outputRow.push(this.textContent);

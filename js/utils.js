@@ -7,7 +7,7 @@
 
   function pick(properties, targetObject, sourceObject) {
     sourceObject = sourceObject || targetObject;
-    properties.forEach((property) => {
+    properties.forEach(function (property) {
       targetObject[property] = sourceObject[property];
     });
     return targetObject;
