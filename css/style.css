@@ -7,6 +7,7 @@ body {
   overflow: hidden;
 }
 
+
 .tick line {
   stroke: none;
   shape-rendering: crispEdges;
@@ -18,7 +19,7 @@ body {
   stroke: #FFCC66;
 }
 
-.connection {
+.connection{
   fill: none;
 }
 
@@ -32,16 +33,15 @@ body {
   fill-opacity: .165;
 }
 
-.brush .overlay {
+.brush .overlay{
   cursor: auto !important;
 }
 
-.max-reference-lines {
+.max-reference-lines{
   stroke-width: 5;
   stroke: black;
 }
-
-.dotted-bar-lines {
+.dotted-bar-lines{
   stroke-dasharray: 3 6;
   stroke: red;
 }
@@ -60,125 +60,41 @@ div.tooltip {
 }
 
 /*--Books View Bottom Panel -- [START]--*/
-
-#bottomPanelRaw {
-  margin-top: 10px;
-}
-
 .bottom-panel {
-  height: 430px;
-  /*background-color: #111;*/
+  height: 400px;
+  background-color: #111;
   overflow: hidden;
   transition: 0.5s;
   margin-bottom: 20px;
 }
-
-.book-content {
+.bottom-panel .book-content {
   padding: 0 8px;
   transition: 0.3s;
   width: calc(50% - 20px);
-  height: calc(100% - 94px);
-  /*color: #afafaf;*/
+  height: calc(100% - 50px);
+  color: #afafaf;
   font-size: 14px;
   display: inline-block;
   overflow-y: auto;
-  vertical-align: top;
 }
-
 .bottom-panel .closebtn {
-  position: relative;
   color: #818181;
   font-size: 36px;
+  margin-right: 12px;
   padding: 2px 5px;
   text-decoration: none;
   display: block;
   transition: 0.3s;
   text-align: right;
-  margin-bottom: -48px;
 }
-
-.bottom-panel a.closebtn:hover {
-  color: #e0e0e0;
+.bottom-panel a.closebtn:hover{
+  color: #f1f1f1;
 }
-
 /*#main {
   transition: margin-left 0.5s;
   padding: 10px;
 }*/
-
 @media screen and (max-height: 450px) {
-  .bottom-panel .book-content {
-    font-size: 12px;
-  }
+  .bottom-panel .book-content {font-size: 12px;}
 }
-
 /*--Books View Bottom Panel -- [END]--*/
-
-h1 {
-  font-size: 24px !important;
-}
-
-h2,
-h3,
-h4,
-h5,
-h6 {
-  /*header-level: 1 to 5*/
-  font-size: 28px !important;
-}
-
-h2 {
-  color: red;
-}
-
-h3 {
-  color: orange;
-}
-
-h4 {
-  color: yellow;
-}
-
-h5 {
-  color: green;
-}
-
-h6 {
-  color: blue;
-}
-
-selection,
-.selected-para-label {
-  background-color: yellow;
-}
-
-.difference-deletion {
-  background-color: #db4437;
-  color: white
-}
-
-.difference-addition {
-  background-color: #5cb85c;
-}
-
-.loader-btn-wrapper {
-  margin: 10px 0 10px;
-  width: calc(50% - 2px);
-  display: inline-block;
-}
-
-.loader-btn {
-  width: 30%;
-  border-radius: 2px;
-  margin: 0 auto;
-  padding: 10px 0;
-  display: block;
-  background: #219150;
-  color: #fff;
-  cursor: pointer;
-  text-align: center;
-}
-
-.loader-btn:hover {
-  background: green;
-}
